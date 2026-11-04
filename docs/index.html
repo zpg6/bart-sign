@@ -1,0 +1,284 @@
+<!doctype html>
+<!-- Generated from guide.md by tools/build_site.py. Edit guide.md, not this file. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build a BART platform sign</title>
+<meta name="description" content="This guide takes you from a bag of parts to a sign on your desk showing live BART departures.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0064a8">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Build a BART platform sign">
+<meta property="og:description" content="This guide takes you from a bag of parts to a sign on your desk showing live BART departures.">
+<meta property="og:url" content="https://zpg6.github.io/bart-sign/">
+<meta property="og:image" content="https://zpg6.github.io/bart-sign/assets/screens/LAFY-EVENING-0.png">
+<meta property="og:image:width" content="480">
+<meta property="og:image:height" content="320">
+<meta property="og:image:alt" content="Two red LED platform signs listing departures from Lafayette">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#guide">Skip to the guide</a>
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="topbar__name" href="./">Platform sign</a>
+    <a class="topbar__link" href="https://github.com/zpg6/bart-sign" rel="noopener">GitHub</a>
+  </div>
+</header>
+<div class="masthead">
+  <div class="wrap">
+    <h1>Build a BART platform sign</h1>
+    <p>This guide takes you from a bag of parts to a sign on your desk showing live BART departures.</p>
+  </div>
+</div>
+<div class="hero">
+
+<figure class="sign sign--hero"><div class="sign__hood"></div><div class="sign__housing"><img src="assets/photos/sign-on-desk.jpg" alt="The finished sign on a desk, showing live Lafayette departures: SF AIRPORT 2,13 MIN on platform 2, Antioch and Pittsburg on platform 1" width="480" height="320"></div><figcaption aria-hidden="true">The finished sign on a desk, showing live Lafayette departures: SF AIRPORT 2,13 MIN on platform 2, Antioch and Pittsburg on platform 1</figcaption></figure>
+</div>
+<main id="guide">
+<nav class="board" aria-labelledby="board-title">
+  <div class="board__label"><h2 id="board-title">In this guide</h2><span aria-hidden="true">Minutes to read</span></div>
+  <div class="board__hood"></div>
+  <ol class="board__panel">
+<li><a href="#what-it-is"><span class="dest">What it is</span><span class="min" aria-hidden="true">1 MIN</span><span class="vh">, 1 minute read</span></a></li>
+<li><a href="#what-you-need"><span class="dest">What you need</span><span class="min" aria-hidden="true">2 MIN</span><span class="vh">, 2 minute read</span></a></li>
+<li><a href="#wire-it"><span class="dest">Wire it</span><span class="min" aria-hidden="true">2 MIN</span><span class="vh">, 2 minute read</span></a></li>
+<li><a href="#install-the-tools"><span class="dest">Install the tools</span><span class="min" aria-hidden="true">2 MIN</span><span class="vh">, 2 minute read</span></a></li>
+<li><a href="#flash-it"><span class="dest">Flash it</span><span class="min" aria-hidden="true">2 MIN</span><span class="vh">, 2 minute read</span></a></li>
+<li><a href="#set-it-up"><span class="dest">Set it up</span><span class="min" aria-hidden="true">2 MIN</span><span class="vh">, 2 minute read</span></a></li>
+<li><a href="#reading-the-sign"><span class="dest">Reading the sign</span><span class="min" aria-hidden="true">4 MIN</span><span class="vh">, 4 minute read</span></a></li>
+<li><a href="#resetting-moving-or-changing-station"><span class="dest">Resetting, moving or changing station</span><span class="min" aria-hidden="true">1 MIN</span><span class="vh">, 1 minute read</span></a></li>
+<li><a href="#troubleshooting"><span class="dest">Troubleshooting</span><span class="min" aria-hidden="true">4 MIN</span><span class="vh">, 4 minute read</span></a></li>
+<li><a href="#how-it-works"><span class="dest">How it works</span><span class="min" aria-hidden="true">3 MIN</span><span class="vh">, 3 minute read</span></a></li>
+<li><a href="#credits"><span class="dest">Credits</span><span class="min" aria-hidden="true">1 MIN</span><span class="vh">, 1 minute read</span></a></li>
+  </ol>
+</nav>
+
+<section class="line-yellow" aria-labelledby="what-it-is">
+<h2 id="what-it-is"><span class="bullet" aria-hidden="true"></span>What it is</h2>
+<p>If you've waited for a train at a BART station, you know the red LED signs that hang over the platform: "SF AIRPORT 4,12 MIN", then "9-CAR, 3-DOOR" underneath. This project rebuilds them at desk size.</p>
+<p>A small ESP32 board connects to your Wi-Fi, asks BART's public API for your station's departures once a minute, and draws them on a 3.5" screen. The screen shows two signs stacked in the gray housings Lafayette station uses, one for each platform. The LEDs are drawn dot by dot, and the fonts were measured LED by LED from station photos, so the text matches the real signs down to their quirks.</p>
+<p>You need no electronics experience. The wiring is eight jumper wires. You flash the software from a Mac or Linux computer once, then set the sign up from your phone.</p>
+</section>
+
+<section class="line-orange" aria-labelledby="what-you-need">
+<h2 id="what-you-need"><span class="bullet" aria-hidden="true"></span>What you need</h2>
+<h3 id="parts">Parts</h3>
+<p>Prices seen on Amazon on 2026-11-02. This order makes two signs, with a spare ESP32 board.</p>
+<div class="table-wrap"><table class="t-part"><thead><tr><th scope="col">Part</th><th scope="col">Price</th><th scope="col">Link</th></tr></thead><tbody><tr><td data-label="Part">ELEGOO ESP-WROOM-32 USB-C dev board, 3-pack</td><td data-label="Price">$19.99</td><td data-label="Link"><a href="https://www.amazon.com/dp/B0D8T53CQ5" rel="noopener">amazon.com/dp/B0D8T53CQ5</a></td></tr><tr><td data-label="Part">XIITIA 3.5" SPI TFT display, ST7796, 2-pack</td><td data-label="Price">$23.99</td><td data-label="Link"><a href="https://www.amazon.com/dp/B0DFWL9M9B" rel="noopener">amazon.com/dp/B0DFWL9M9B</a></td></tr><tr><td data-label="Part">ELEGOO 120-piece Dupont jumper wires</td><td data-label="Price">$6.98</td><td data-label="Link"><a href="https://www.amazon.com/dp/B01EV70C78" rel="noopener">amazon.com/dp/B01EV70C78</a></td></tr><tr class="total"><td data-label="Part"><strong>Total</strong></td><td data-label="Price"><strong>$50.96</strong></td><td data-label="Link"></td></tr></tbody></table></div>
+<p>That's about $25 per sign. From the wire kit you need 8 female-to-female wires per sign.</p>
+<p>This display uses TN glass, so from an angle its blacks and the gray housing tint blue, as in the photo above. An IPS version of the same 3.5" ST7796 panel costs about the same and looks right from any angle; see <a href="https://github.com/zpg6/bart-sign/blob/main/notes/sourcing.md" rel="noopener">notes/sourcing.md</a>. It needs one firmware change (color inversion on).</p>
+<!-- PHOTO: the parts laid out: ESP32 board, display, 8 wires, cable -->
+<h3 id="tools">Tools</h3>
+<ul><li>A Mac or Linux computer. Windows is untested.</li><li>A USB cable that carries data, with USB-C on the board end. <strong>Charge-only cables are the number one reason a board "isn't detected".</strong> If you're not sure about a cable, try another one before anything else.</li><li>A phone, for setup.</li><li>A 2.4 GHz Wi-Fi network. The ESP32 can't see 5 GHz networks.</li></ul>
+<h3 id="optional">Optional</h3>
+<ul><li>A USB phone charger, to run the sign away from your computer. It draws well under an amp.</li><li>A case or stand. This repo doesn't include one.</li></ul>
+</section>
+
+<section class="line-red" aria-labelledby="wire-it">
+<h2 id="wire-it"><span class="bullet" aria-hidden="true"></span>Wire it</h2>
+<p>Power everything off (unplugged) while you wire.</p>
+<p>Looking at the screen, the display's pin header runs down its left edge, with SDA-O at the top and GND at the bottom. That's the right way up for the sign. The header has nine pins. Connect eight of them to the ESP32 board:</p>
+<figure class="sheet"><div class="sheet__pan" tabindex="0" role="group" aria-label="Wiring diagram: eight jumper wires from the display&#x27;s 9-pin SPI header to the ESP32 board. GND to GND, VCC to 3V3, SCL to D18, SDA to D23, RST to D33, DC to D27, CS to D5, BL to D32, SDA-O not connected., scrollable"><a href="assets/wiring.svg"><img src="assets/wiring.svg" alt="Wiring diagram: eight jumper wires from the display&#x27;s 9-pin SPI header to the ESP32 board. GND to GND, VCC to 3V3, SCL to D18, SDA to D23, RST to D33, DC to D27, CS to D5, BL to D32, SDA-O not connected." loading="lazy"></a></div><figcaption>Wiring diagram: eight jumper wires from the display&#x27;s 9-pin SPI header to the ESP32 board. GND to GND, VCC to 3V3, SCL to D18, SDA to D23, RST to D33, DC to D27, CS to D5, BL to D32, SDA-O not connected. <a href="assets/wiring.svg">Full size</a><span class="sheet__hint" aria-hidden="true">Swipe to pan</span></figcaption></figure>
+<div class="table-wrap"><table class="t-display-pin"><thead><tr><th scope="col">Display pin</th><th scope="col">ESP32 pin</th><th scope="col">What it does</th></tr></thead><tbody><tr><td data-label="Display pin">GND</td><td data-label="ESP32 pin">GND</td><td data-label="What it does">Ground. Either GND pin on the board works.</td></tr><tr><td data-label="Display pin">VCC</td><td data-label="ESP32 pin">3V3</td><td data-label="What it does">Power for the display</td></tr><tr><td data-label="Display pin">SCL</td><td data-label="ESP32 pin">D18</td><td data-label="What it does">SPI clock</td></tr><tr><td data-label="Display pin">SDA</td><td data-label="ESP32 pin">D23</td><td data-label="What it does">SPI data</td></tr><tr><td data-label="Display pin">RST</td><td data-label="ESP32 pin">D33</td><td data-label="What it does">Reset</td></tr><tr><td data-label="Display pin">DC</td><td data-label="ESP32 pin">D27</td><td data-label="What it does">Data or command</td></tr><tr><td data-label="Display pin">CS</td><td data-label="ESP32 pin">D5</td><td data-label="What it does">Chip select</td></tr><tr><td data-label="Display pin">BL</td><td data-label="ESP32 pin">D32</td><td data-label="What it does">Backlight, dimmed at night</td></tr><tr><td data-label="Display pin">SDA-O</td><td data-label="ESP32 pin">not connected</td><td data-label="What it does">Leave it empty</td></tr></tbody></table></div>
+<p>Your board may print the pins as <code class="nw">D18</code>, <code class="nw">IO18</code>, <code class="nw">G18</code> or just <code class="nw">18</code>. They are the same pin.</p>
+<p>Two things trip people up:</p>
+<ul><li>The display labels its pins SCL and SDA, which sounds like I2C. It is SPI. Wire it exactly as in the table.</li><li>Turn the display over and find the jumper table marked IM0, IM1 and IM2. All three must be on <code class="nw">1</code>, which is the SPI setting. The boards from the listing above arrive set this way, so this is just a check. They are small solder jumpers, so if yours is set differently you'll need a soldering iron to move it.</li></ul>
+<p>Double-check DC. During bring-up, a forgotten DC wire gave a solid white screen.</p>
+<!-- PHOTO: display header close-up with the 8 wires attached, labels visible -->
+<!-- PHOTO: ESP32 board close-up with the 8 wires attached, pin labels visible -->
+<!-- PHOTO: back of the display showing the IM0/IM1/IM2 jumpers set to SPI -->
+</section>
+
+<section class="line-green" aria-labelledby="install-the-tools">
+<h2 id="install-the-tools"><span class="bullet" aria-hidden="true"></span>Install the tools</h2>
+<p>The firmware is written in Rust. You install Rust, a Rust compiler for the ESP32's Xtensa CPU, and a flashing tool. You only do this once.</p>
+<p>On Linux, first install the build tools espup needs. On Debian or Ubuntu that's <code>sudo apt-get install -y gcc build-essential curl pkg-config</code>.</p>
+<ol><li>Install Rust with the command from <a href="https://rustup.rs" rel="noopener">rustup.rs</a>, and accept the defaults:
+<pre><code class="language-sh">curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh</code></pre>
+<p>Open a new terminal afterwards. If you already have Rust, run <code>rustup update</code> instead. espflash needs Rust 1.95 or newer.</p></li><li>Install the ESP32 toolchain:
+<pre><code class="language-sh">cargo install espup --locked
+espup install --name esp-1.97 --toolchain-version 1.97.0.0 --targets esp32</code></pre>
+<p>This downloads the compiler and writes <code class="nw">export-esp.sh</code> in your home folder (<code class="nw">~/export-esp.sh</code>). The flash script loads it from there.</p></li><li>Install the flashing tool:
+<pre><code class="language-sh">cargo install espflash --locked</code></pre></li><li>Check the versions:
+<pre><code class="language-sh">rustc +esp-1.97 --version   # should end in (1.97.0.0)
+espflash --version          # should be 4.7.0 or newer</code></pre></li></ol>
+<p>Use exactly <code class="nw">1.97.0.0</code> and the name <code class="nw">esp-1.97</code>. Newer pre-release toolchains (1.98, 1.99) build firmware that reboots forever on the ESP32 without printing anything. See <a href="#troubleshooting">Troubleshooting</a>.</p>
+</section>
+
+<section class="line-blue" aria-labelledby="flash-it">
+<h2 id="flash-it"><span class="bullet" aria-hidden="true"></span>Flash it</h2>
+<ol><li>Download the code:
+<pre><code class="language-sh">git clone https://github.com/zpg6/bart-sign.git
+cd bart-sign/firmware</code></pre></li><li>Plug the ESP32 board into your computer.</li><li>Build and flash:
+<pre><code class="language-sh">./flash.sh</code></pre>
+<p>The first build takes a minute or more while it downloads and compiles libraries. Then espflash finds the board, writes the firmware and opens a serial monitor showing the sign's log.</p></li></ol>
+<p>If espflash asks which port to use, pick the one that appeared when you plugged the board in. On a Mac it looks like <code class="nw">/dev/cu.usbserial-XXXX</code>, on Linux <code class="nw">/dev/ttyUSB0</code>. You can also name it up front:</p>
+<pre><code class="language-sh">ESPFLASH_PORT=/dev/cu.usbserial-XXXX ./flash.sh</code></pre>
+<p>On Linux, a "Permission denied" error means your user can't open the port yet. Run <code>sudo usermod -a -G dialout $USER</code>, log out and back in, and try again.</p>
+<p>If espflash sits at <code class="nw">Connecting...</code>, put the board into download mode by hand. Hold the <strong>BOOT</strong> button, press and release <strong>EN</strong>, then let go of BOOT once writing starts.</p>
+<p>It worked if espflash prints <code>Flashing has completed!</code> and, a few lines into the log below it, <code>bart-sign: boot</code>. The screen runs its lamp test and a short intro, then the top sign shows JOIN WI-FI (next section). Press <code class="nw">Ctrl+C</code> to close the monitor. The sign keeps running.</p>
+<p>If you change the code later, run <code class="nw">./flash.sh</code> again. Reflashing keeps your Wi-Fi and station settings.</p>
+</section>
+
+<section class="line-yellow" aria-labelledby="set-it-up">
+<h2 id="set-it-up"><span class="bullet" aria-hidden="true"></span>Set it up</h2>
+<p>A new sign has no Wi-Fi settings, so it starts its own open Wi-Fi network and asks you to join it. The top sign shows:</p>
+<div class="led-msg"><span class="led-msg__line">JOIN WI-FI</span><span class="vh"> / </span><span class="led-msg__line">BART-SIGN-XXXX</span><span class="vh"> / </span><span class="led-msg__line">OPEN 192.168.4.1</span></div>
+<p><code class="nw">XXXX</code> is four characters unique to your board.</p>
+<!-- PHOTO: the sign showing JOIN WI-FI / BART-SIGN-XXXX / OPEN 192.168.4.1 -->
+<p>On your phone:</p>
+<ol><li>Open Wi-Fi settings and join <strong>BART-SIGN-XXXX</strong>. It has no password.</li><li>A setup page titled <strong>Set up your sign</strong> pops up. If it doesn't, open a browser and go to <code class="nw">http://192.168.4.1</code>.</li><li><strong>Wi-Fi network:</strong> pick your network from the list. The list only shows 2.4 GHz networks the sign can hear, strongest first. Picking from the list avoids typos like a lowercase <code class="nw">l</code> typed as a capital <code class="nw">I</code>, which happened during bring-up. If your network is hidden, type its name in the box below the list.</li><li><strong>Password:</strong> type your Wi-Fi password. Tap <strong>Show password</strong> to check it. Leave it empty for an open network.</li><li><strong>Station:</strong> pick your station. All 50 are listed. The default is Lafayette.</li><li><strong>Line:</strong> the page starts on Yellow, Lafayette's line. Pick <strong>All lines</strong> to see every train, or one line: Yellow, Red, Green, Orange or Blue. With one line picked, the sign only shows that line's trains.</li><li>Tap <strong>Save and connect</strong>. If something is off, such as a password shorter than 8 characters, the page says what to fix.</li></ol>
+<!-- PHOTO: phone screenshot of the setup page -->
+<p>The sign shows <code>SAVED / RESTARTING</code>, restarts, and joins your network. The setup network disappears, and your phone goes back to its usual Wi-Fi. The intro plays again, this time with your station's name on the bottom sign. Within a minute it gives way to trains.</p>
+<p>The sign works with WPA2 password networks and open networks. Networks that need a username (enterprise Wi-Fi) or a sign-in page (hotels, cafes) won't work.</p>
+</section>
+
+<section class="line-orange" aria-labelledby="reading-the-sign">
+<h2 id="reading-the-sign"><span class="bullet" aria-hidden="true"></span>Reading the sign</h2>
+<p>Each picture below is rendered by the sign's own drawing code, from real BART data. The top sign shows the platform whose trains BART lists as southbound. At Lafayette that's platform 2, toward San Francisco and SFO. The bottom sign shows the other platform. The label under each sign names the platform its trains are using.</p>
+<h3 id="boot">Boot</h3>
+<figure class="sign"><div class="sign__hood"></div><div class="sign__housing"><img src="assets/boot-final.png" alt="The last frame of the boot intro" width="480" height="320" loading="lazy"></div><figcaption aria-hidden="true">The last frame of the boot intro</figcaption></figure>
+<p>Both signs run a lamp test: every LED on, then dark from the top down. A dotted border builds around each sign. Then the top sign types BAY AREA over RAPID TRANSIT in the big arriving font, and the bottom sign types your station's name on the same beat, finishing with it. The line name appears underneath. Before setup there's no station yet, so the bottom sign copies the top one. Departures replace the intro as soon as the first fetch lands.</p>
+<h3 id="departures">Departures</h3>
+<figure class="sign"><div class="sign__hood"></div><div class="sign__housing"><img src="assets/screens/LAFY-EVENING-0.png" alt="Lafayette in the evening" width="480" height="320" loading="lazy"></div><figcaption aria-hidden="true">Lafayette in the evening</figcaption></figure>
+<p>The usual screen. Each sign lists up to two destinations, soonest first. Each destination gets two lines: the name with the next one or two trains ("4,12 MIN"), then the train length ("9-CAR, 3-DOOR").</p>
+<p>BART's last two-door legacy train left regular service in September 2023. Every car in service since then has three doors per side, so the sign always says 3-DOOR. The API reports cars, not doors.</p>
+<p>Look closely at the bottom line: "9-CAR. 3-DOOR" with a period. That's on purpose. On the real signs that line sits on the last row of LEDs, which cuts off the comma's tail.</p>
+<p>Between fetches, the minutes count down on the sign itself. The countdown stops at 1 MIN. Only BART's own report puts a train at the platform.</p>
+<h3 id="train-at-the-platform">Train at the platform</h3>
+<figure class="sign"><div class="sign__hood"></div><div class="sign__housing"><img src="assets/screens/LAFY-ARRIVING-0.png" alt="A train arriving at Lafayette" width="480" height="320" loading="lazy"></div><figcaption aria-hidden="true">A train arriving at Lafayette</figcaption></figure>
+<p>When BART reports a train at the platform, that sign switches to the destination in big letters with the car count below. Long names split over two lines, like PITTSBURG / BAY POINT.</p>
+<h3 id="busy-stations-rotate">Busy stations rotate</h3>
+<figure class="sheet"><div class="sheet__pan" tabindex="0" role="group" aria-label="Stations that rotate, scrollable"><a href="assets/rotation.png"><img src="assets/rotation.png" alt="Stations that rotate" loading="lazy"></a></div><figcaption>Stations that rotate <a href="assets/rotation.png">Full size</a><span class="sheet__hint" aria-hidden="true">Swipe to pan</span></figcaption></figure>
+<p>Real BART signs show one platform each. Most stations have two platforms, so each sign gets one. MacArthur has four and 12th St and 19th St have three. There, each sign takes the platforms whose trains run its way and cycles through them every 6 seconds. The platform label changes with them.</p>
+<p>A platform with more than two destinations pages through them two at a time. Montgomery St at rush hour has four northbound:</p>
+<div class="sign-pair"><figure class="sign"><div class="sign__hood"></div><div class="sign__housing"><img src="assets/screens/MONT-RUSH-0.png" alt="Montgomery St, first screen" width="480" height="320" loading="lazy"></div><figcaption aria-hidden="true">Montgomery St, first screen</figcaption></figure><figure class="sign"><div class="sign__hood"></div><div class="sign__housing"><img src="assets/screens/MONT-RUSH-1.png" alt="Montgomery St, second screen" width="480" height="320" loading="lazy"></div><figcaption aria-hidden="true">Montgomery St, second screen</figcaption></figure></div>
+<p>If two trains are at the platforms at once, the big arriving screens alternate.</p>
+<h3 id="late-at-night">Late at night</h3>
+<figure class="sign"><div class="sign__hood"></div><div class="sign__housing"><img src="assets/screens/LAFY-LATE-0.png" alt="Long waits late at night" width="480" height="320" loading="lazy"></div><figcaption aria-hidden="true">Long waits late at night</figcaption></figure>
+<p>Late in the evening the gaps get long. This is Lafayette at 11:17 PM. The sign shows what BART reports, even a 96-minute wait.</p>
+<figure class="sign"><div class="sign__hood"></div><div class="sign__housing"><img src="assets/screens/LAFY-SOUTH-DONE-0.png" alt="Southbound done for the night" width="480" height="320" loading="lazy"></div><figcaption aria-hidden="true">Southbound done for the night</figcaption></figure>
+<p>From 9 PM to 5 AM by BART's clock, a platform with no more trains shows NO MORE TRAINS / TONIGHT. This is Lafayette at 12:47 AM. The other sign keeps running until its last train.</p>
+<figure class="sign"><div class="sign__hood"></div><div class="sign__housing"><img src="assets/screens/LAFY-NIGHT-0.png" alt="Service over" width="480" height="320" loading="lazy"></div><figcaption aria-hidden="true">Service over</figcaption></figure>
+<p>When both platforms are done (here, 1:17 AM), the backlight dims to a faint glow, like a sign in a closed station. The sign checks every 5 minutes instead of every minute, and brightens with the first trains of the morning.</p>
+<p>During the day, a sign with nothing to show says NO TRAINS. You'll also see that if the line you picked doesn't stop at your station, or if you picked Oakland International Airport, which BART's departure feed doesn't cover.</p>
+<h3 id="every-station">Every station</h3>
+<figure class="sheet"><div class="sheet__pan" tabindex="0" role="group" aria-label="Every station, live data, scrollable"><a href="assets/all-stations.png"><img src="assets/all-stations.png" alt="Every station, live data" loading="lazy"></a></div><figcaption>Every station, live data <a href="assets/all-stations.png">Full size</a><span class="sheet__hint" aria-hidden="true">Swipe to pan</span></figcaption></figure>
+<p>The first screen at every station, from live data at 10:20 PM on Nov 2, 2026. Oakland Airport is the one station missing, because the feed has no departures for it.</p>
+<p>Every station name, as a destination in the list font and in the big arriving font:</p>
+<figure class="sheet"><div class="sheet__pan" tabindex="0" role="group" aria-label="Station names, list font, scrollable"><a href="assets/names_list.png"><img src="assets/names_list.png" alt="Station names, list font" loading="lazy"></a></div><figcaption>Station names, list font <a href="assets/names_list.png">Full size</a><span class="sheet__hint" aria-hidden="true">Swipe to pan</span></figcaption></figure>
+<figure class="sheet"><div class="sheet__pan" tabindex="0" role="group" aria-label="Station names, arriving font, scrollable"><a href="assets/names_arriving.png"><img src="assets/names_arriving.png" alt="Station names, arriving font" loading="lazy"></a></div><figcaption>Station names, arriving font <a href="assets/names_arriving.png">Full size</a><span class="sheet__hint" aria-hidden="true">Swipe to pan</span></figcaption></figure>
+<h3 id="status-messages">Status messages</h3>
+<p>Status messages take over the top sign. The bottom sign goes dark.</p>
+<div class="table-wrap"><table class="t-message"><thead><tr><th scope="col">Message</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td data-label="Message"><span class="led-msg"><span class="led-msg__line">JOIN WI-FI</span><span class="vh"> / </span><span class="led-msg__line">BART-SIGN-XXXX</span><span class="vh"> / </span><span class="led-msg__line">OPEN 192.168.4.1</span></span></td><td data-label="Meaning">Setup mode. See <a href="#set-it-up">Set it up</a>.</td></tr><tr><td data-label="Message"><span class="led-msg"><span class="led-msg__line">SAVED</span><span class="vh"> / </span><span class="led-msg__line">RESTARTING</span></span></td><td data-label="Meaning">Settings saved.</td></tr><tr><td data-label="Message"><span class="led-msg"><span class="led-msg__line">CONNECTING TO</span><span class="vh"> / </span><span class="led-msg__line"><em>your network</em></span></span></td><td data-label="Meaning">Joining Wi-Fi. During boot it only appears if joining takes more than 20 seconds. After a dropout, the departures stay up until they're 3 minutes old, then this appears.</td></tr><tr><td data-label="Message"><span class="led-msg"><span class="led-msg__line">CONNECTED</span><span class="vh"> / </span><span class="led-msg__line">LOADING TRAINS</span></span></td><td data-label="Meaning">On Wi-Fi, waiting for the first departures.</td></tr><tr><td data-label="Message"><span class="led-msg"><span class="led-msg__line">CAN'T JOIN</span><span class="vh"> / </span><span class="led-msg__line"><em>your network</em></span><span class="vh"> / </span><span class="led-msg__line">HOLD BOOT 5S: RESET</span></span></td><td data-label="Meaning">Three tries failed. The sign keeps trying. See <a href="#troubleshooting">Troubleshooting</a>.</td></tr><tr><td data-label="Message"><span class="led-msg"><span class="led-msg__line">HOLD 5 S TO</span><span class="vh"> / </span><span class="led-msg__line">RESET WI-FI</span></span></td><td data-label="Meaning">You're holding BOOT. Keep holding to reset, or let go to cancel.</td></tr><tr><td data-label="Message"><span class="led-msg"><span class="led-msg__line">WI-FI RESET</span></span></td><td data-label="Meaning">Settings erased. The sign restarts in setup mode.</td></tr></tbody></table></div>
+</section>
+
+<section class="line-red" aria-labelledby="resetting-moving-or-changing-station">
+<h2 id="resetting-moving-or-changing-station"><span class="bullet" aria-hidden="true"></span>Resetting, moving or changing station</h2>
+<p>The settings are your Wi-Fi network, password, station and line. To change any of them, start over:</p>
+<ol><li>Hold the <strong>BOOT</strong> button on the ESP32 board.</li><li>After a second the sign shows <code>HOLD 5 S TO / RESET WI-FI</code>. Keep holding.</li><li>At 5 seconds it shows <code>WI-FI RESET</code> and restarts.</li><li>Let go and follow <a href="#set-it-up">Set it up</a> again.</li></ol>
+<p>Let go before 5 seconds to cancel.</p>
+<p>This erases the Wi-Fi password too, so have it handy. Moving the sign to a new home works the same way.</p>
+<p>If the sign can't join your network, it never erases the settings on its own. Your router might just be down. It keeps retrying, and you decide when to reset.</p>
+</section>
+
+<section class="line-green" aria-labelledby="troubleshooting">
+<h2 id="troubleshooting"><span class="bullet" aria-hidden="true"></span>Troubleshooting</h2>
+<h3 id="no-serial-port-appears--board-not-detected">No serial port appears / board not detected</h3>
+<p>Almost always the cable. Many USB-C cables only charge. Try a different cable, ideally one you've used to move files. Then try another USB port.</p>
+<p>On a Mac the board appears as <code class="nw">/dev/cu.usbserial-XXXX</code>, on Linux as <code class="nw">/dev/ttyUSB0</code>. Run <code>espflash list-ports</code> with the board plugged in.</p>
+<h3 id="espflash-hangs-at-connecting">espflash hangs at "Connecting..."</h3>
+<p>Hold <strong>BOOT</strong>, press and release <strong>EN</strong>, and let go of BOOT once writing starts. Run <code class="nw">./flash.sh</code> again if it timed out.</p>
+<h3 id="solid-white-screen">Solid white screen</h3>
+<p>The display has power but isn't getting commands. In bring-up this was a forgotten DC wire. Check DC to D27 first, then the other signal wires (SCL, SDA, CS, RST), then that the IM jumpers are on SPI.</p>
+<h3 id="black-screen">Black screen</h3>
+<p>Check BL to D32 (the backlight), and VCC to 3V3 and GND to GND.</p>
+<h3 id="the-board-reboots-over-and-over-and-the-log-is-empty">The board reboots over and over and the log is empty</h3>
+<p>Wrong toolchain. The 1.98 and 1.99 pre-release Xtensa toolchains miscompile the ESP32's startup code. The chip hangs before the firmware starts, the watchdog resets it, and it repeats forever. Check:</p>
+<pre><code class="language-sh">rustc +esp-1.97 --version</code></pre>
+<p>It must end in <code class="nw">(1.97.0.0)</code>. If not, rerun the <code>espup install</code> command from <a href="#install-the-tools">Install the tools</a>, then flash again.</p>
+<h3 id="build-error-custom-toolchain-esp-197--is-not-installed">Build error: "custom toolchain 'esp-1.97' ... is not installed"</h3>
+<p>The toolchain was installed under another name. Rerun <code>espup install</code> with <code>--name esp-1.97</code> exactly as shown.</p>
+<h3 id="build-error-xtensa-linker--was-not-found-in-path">Build error: "Xtensa linker ... was not found in PATH"</h3>
+<p>The compiler paths aren't loaded. <code class="nw">flash.sh</code> loads them from <code class="nw">~/export-esp.sh</code>. If you told espup to write the file elsewhere, point to it:</p>
+<pre><code class="language-sh">ESP_EXPORT=/path/to/export-esp.sh ./flash.sh</code></pre>
+<h3 id="old-espflash">Old espflash</h3>
+<p>You need espflash 4.7 or newer. Version 4.1 ships an older second-stage bootloader. Upgrade:</p>
+<pre><code class="language-sh">cargo install espflash --locked --force</code></pre>
+<h3 id="my-network-isnt-in-the-list">My network isn't in the list</h3>
+<ul><li>The sign only sees 2.4 GHz. If your router uses separate names for 2.4 and 5 GHz, pick the 2.4 GHz one. If it combines them under one name, that's fine.</li><li>The list comes from a scan when the sign starts. Move the sign closer to the router, unplug it, and plug it back in to scan again.</li><li>For a hidden network, type the name in the box under the list.</li></ul>
+<h3 id="cant-join">CAN'T JOIN</h3>
+<p>The sign tried three times and failed. Common causes:</p>
+<ul><li>Wrong password. Use <strong>Show password</strong> on the setup page to check it.</li><li>A typo in the network name, such as a lowercase <code class="nw">l</code> for a capital <code class="nw">I</code>. Pick the network from the list instead of typing it.</li><li>A 5 GHz-only network.</li><li>The sign is too far from the router.</li></ul>
+<p>Hold BOOT for 5 seconds and set it up again.</p>
+<p>If the serial log shows one <code class="nw">AuthenticationFailed</code> right after a restart and then connects, that's normal. Some routers refuse the first attempt because they still remember the board's previous session. The firmware retries after half a second.</p>
+<h3 id="the-setup-page-doesnt-pop-up">The setup page doesn't pop up</h3>
+<p>Stay connected to BART-SIGN-XXXX and open <code class="nw">http://192.168.4.1</code> in your phone's browser. If your phone warns that the network has no internet, choose to stay connected.</p>
+<h3 id="no-trains-all-day">NO TRAINS all day</h3>
+<ul><li>The line you picked doesn't stop at your station. Reset and choose <strong>All lines</strong>.</li><li>You picked Oakland International Airport. BART's departure feed has no trains for it.</li></ul>
+<h3 id="the-screen-stopped-changing">The screen stopped changing</h3>
+<p>While trains are listed, the minutes change every minute. If they stop changing, the firmware has stopped. Unplug the sign and plug it back in. Your settings stay. If it happens again, run the sign from your computer with <code>espflash monitor</code> open, and when it freezes, look for <code class="nw">PANIC</code> in the log.</p>
+<h3 id="departures-stopped-everywhere">Departures stopped everywhere</h3>
+<p>When fetches keep failing, the trains count down and drop off one by one until the sign says NO TRAINS. The serial log shows <code>fetch_etd failed</code>.</p>
+<p>The firmware uses BART's public API key. BART says it may change that key, and recommends registering your own at <a href="https://www.bart.gov/schedules/developers/api" rel="noopener">bart.gov/schedules/developers/api</a>. To use your own key, replace the key in <code class="nw">PATH_END</code> in <code class="nw">firmware/src/net.rs</code> and flash again.</p>
+<h3 id="the-sign-doesnt-power-from-a-usb-c-charger">The sign doesn't power from a USB-C charger</h3>
+<p>Some ESP32 boards lack the resistors a USB-C charger looks for before it supplies power. Try a USB-A charger with a USB-A to USB-C cable.</p>
+</section>
+
+<section class="line-blue" aria-labelledby="how-it-works">
+<h2 id="how-it-works"><span class="bullet" aria-hidden="true"></span>How it works</h2>
+<h3 id="data">Data</h3>
+<p>Once a minute the ESP32 requests <code>https://api.bart.gov/api/etd.aspx?cmd=etd&amp;orig=&lt;station&gt;&amp;key=&lt;key&gt;&amp;json=y</code>, BART's real-time departures. The connection uses TLS with full certificate checks: chain, signature and hostname. The sign has no clock, so certificate dates aren't checked. The trusted root certificates are in <code class="nw">firmware/certs/</code>.</p>
+<p>If a fetch fails, the sign waits longer before the next try: 2 minutes, then 4, then 5 at most. Each wait gets a little random jitter. Once service is over for the night, it checks every 5 minutes.</p>
+<p>The response is parsed in <code class="nw">sign-core/src/etd.rs</code>. Trains are grouped by destination and platform, and cancelled trains are dropped like on the real signs. The time of night comes from BART's own clock in the response, so the sign needs no time zone setting.</p>
+<h3 id="drawing">Drawing</h3>
+<p><code class="nw">sign-core</code> is a library with no hardware code. It lays out a 176 × 48 LED grid, the size of the real sign, which was measured from a photo of one showing random noise. <code class="nw">board.rs</code> decides which platform goes on which sign. <code class="nw">layout.rs</code> places the text and shortens long names the way BART does ("MILLBRAE/CALTRN", "PITTSBURG/BAY PT"). <code class="nw">render.rs</code> turns each LED into a round dot, 2.6 pixels apart, with a bright core and a dim rim.</p>
+<p>On the ESP32, <code class="nw">firmware/src/sign.rs</code> draws the housings once and then repaints only the LED rows that changed, over a 40 MHz SPI bus.</p>
+<h3 id="fonts">Fonts</h3>
+<p>The sign uses two fonts: a small one 8 LEDs tall for lists and a big one 14 LEDs tall for arriving trains. Two independent studies measured them LED by LED from station photos on Wikimedia Commons, Flickr and bart.gov, and the results were reconciled. The details, with every source, are in <code class="nw">notes/font-measurements-a.md</code> and <code class="nw">notes/font-measurements-b.md</code>.</p>
+<h3 id="tests">Tests</h3>
+<ul><li><code class="nw">sign-core</code>: 36 tests. They run every station's live snapshot through every line filter and every page, a full night of Lafayette snapshots, and every station name in both fonts, checking that text stays on the sign.</li><li>Firmware host tests: 15 tests for the settings record in flash, the setup form and the captive-portal DNS.</li></ul>
+<p>CI runs both on every push and builds the firmware.</p>
+<h3 id="proof-images">Proof images</h3>
+<p>Every image in this guide comes from <code class="nw">tools/render_docs.sh</code>, which runs the same <code class="nw">sign-core</code> drawing code the firmware uses on the saved API responses in <code class="nw">sign-core/tests/fixtures/</code>. Rerunning it on unchanged code produces identical files.</p>
+</section>
+
+<section class="line-yellow" aria-labelledby="credits">
+<h2 id="credits"><span class="bullet" aria-hidden="true"></span>Credits</h2>
+<p>Departure data comes from BART's <a href="https://www.bart.gov/schedules/developers" rel="noopener">real-time API</a>, used under BART's <a href="https://www.bart.gov/dla" rel="noopener">Developer License Agreement</a>. BART provides the data as is and asks developers for a link back. Thanks, BART.</p>
+<p>This is a fan project. It is not affiliated with, sponsored by or endorsed by the San Francisco Bay Area Rapid Transit District. "BART" and the BART logo are trademarks of the San Francisco Bay Area Rapid Transit District.</p>
+<p>The fonts were rebuilt from public station photos. Photographers and sources are credited in <code class="nw">notes/</code>.</p>
+<p>Code: <a href="https://github.com/zpg6/bart-sign" rel="noopener">github.com/zpg6/bart-sign</a>, MIT license.</p>
+</section>
+</main>
+<footer class="footer">
+  <div class="wrap">
+    <p>A fan project, not affiliated with BART. Code on <a href="https://github.com/zpg6/bart-sign" rel="noopener">GitHub</a>, MIT license.</p>
+  </div>
+</footer>
+<script>
+document.querySelectorAll("pre").forEach(function (pre) {
+  if (!navigator.clipboard) return;
+  var box = document.createElement("div");
+  box.className = "code";
+  pre.parentNode.insertBefore(box, pre);
+  box.appendChild(pre);
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "copy";
+  b.textContent = "Copy";
+  b.addEventListener("click", function () {
+    navigator.clipboard.writeText(pre.textContent.replace(/\n$/, "")).then(function () {
+      b.textContent = "Copied";
+      setTimeout(function () { b.textContent = "Copy"; }, 1500);
+    });
+  });
+  box.appendChild(b);
+});
+</script>
+</body>
+</html>

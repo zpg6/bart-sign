@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  sign-core:
+    name: sign-core tests and clippy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sign-core
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install stable Rust with clippy
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy
+          rustup default stable
+      - run: cargo test
+      - run: cargo clippy --all-targets -- -D warnings
+
+  site:
+    name: website matches guide.md
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: python3 tools/build_site.py --check
+
+  host-tests:
+    name: firmware host tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      # run.sh calls `cargo +stable`, so stable must be installed.
+      - name: Install stable Rust
+        run: rustup toolchain install stable --profile minimal
+      - run: firmware/host-tests/run.sh
+
+  firmware:
+    name: firmware build (ESP32)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      # Installs the Xtensa toolchain as "esp-1.97", the channel that
+      # firmware/rust-toolchain.toml asks for. Keep it on the stable 1.97.0.0
+      # release: the 1.98/1.99 pre-releases miscompile ESP32 startup.
+      - name: Install Xtensa Rust 1.97.0.0
+        uses: esp-rs/xtensa-toolchain@v1.7
+        with:
+          version: "1.97.0.0"
+          name: esp-1.97
+          buildtargets: esp32
+          ldproxy: false
+      - name: Build
+        working-directory: firmware
+        run: cargo build --release

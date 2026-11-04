@@ -1,0 +1,1 @@
+{"?xml":{"@version":"1.0","@encoding":"utf-8"},"root":{"@id":"1","uri":{"#cdata-section":"http://api.bart.gov/api/etd.aspx?cmd=etd&orig=LAFY&json=y"},"date":"11/03/2026","time":"01:17:47 AM PST","station":[{"name":"Lafayette","abbr":"LAFY"}],"message":{"warning":"No data matched your criteria."}}}

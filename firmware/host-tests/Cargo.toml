@@ -1,0 +1,20 @@
+# Host-side unit tests for the firmware's pure modules (settings record,
+# form/HTTP parsing, captive DNS). Run with ./host-tests/run.sh.
+[package]
+name = "bart-sign-host-tests"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Standalone: never join a parent workspace.
+[workspace]
+
+[lib]
+path = "lib.rs"
+
+[features]
+# Mirrors the firmware's feature so web.rs builds both ways.
+ba-mark = []
+
+[dependencies]
+heapless = "0.9.3"

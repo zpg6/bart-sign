@@ -1,0 +1,13 @@
+[target.xtensa-esp32-none-elf]
+# ESP-WROOM-32 DevKit: 4 MB flash, no PSRAM.
+runner = "espflash flash --monitor --chip esp32 --flash-size 4mb --partition-table partitions.csv"
+
+[env]
+ESP_LOG = "info"
+
+[build]
+rustflags = ["-C", "link-arg=-nostartfiles"]
+target = "xtensa-esp32-none-elf"
+
+[unstable]
+build-std = ["alloc", "core"]

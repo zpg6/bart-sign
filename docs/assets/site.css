@@ -1,0 +1,333 @@
+/* Platform sign build guide. System fonts only, no build step. */
+
+:root {
+  --blue: #0064a8;          /* bart.gov blue */
+  --led: #ff3b24;           /* LED red: used sparingly, outside the sign images */
+  --housing: #5c5e62;       /* Lafayette housing gray, from tools/compose_mockups.py */
+  --hood: #0e0c10;
+  --bar: #111;              /* station-name sign black */
+  --bg: #fff;
+  --ink: #1b1b1b;
+  --muted: #5a5a5a;
+  --rule: #dcdcdc;
+  --code-bg: #f1f1f0;
+  --link: #0064a8;
+  --focus: #0064a8;
+  /* BART line colors, as BART's API reports them */
+  --yellow: #ffff33;
+  --orange: #ff9933;
+  --red: #ff0000;
+  --green: #339933;
+  --lblue: #0099cc;
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --measure: 46rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121212;
+    --ink: #ebebeb;
+    --muted: #a9a9a9;
+    --rule: #333;
+    --code-bg: #262626;
+    --link: #6cb8ff;
+    --focus: #ffff33;
+    --bar: #000;
+  }
+  section > h2, th, pre { box-shadow: inset 0 0 0 1px #2c2c2c; }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 1rem; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 17px/1.6 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+img { max-width: 100%; height: auto; }
+
+a { color: var(--link); text-underline-offset: 0.18em; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.wrap { max-width: var(--measure); margin: 0 auto; padding: 0 1.25rem; }
+
+.vh {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+.skip { position: absolute; left: -999px; top: 0; background: #fff; color: #000; padding: 0.5rem 1rem; z-index: 2; }
+.skip:focus { left: 0.5rem; top: 0.5rem; }
+
+/* ---------------------------------------------------------- top bar */
+
+.topbar { background: var(--bar); color: #fff; }
+.topbar__inner { display: flex; align-items: center; justify-content: space-between; min-height: 3rem; }
+.topbar a { color: #fff; text-decoration: none; font-weight: 700; }
+.topbar a:hover { text-decoration: underline; }
+.topbar a:focus-visible { outline-color: var(--yellow); }
+.topbar__name { letter-spacing: 0.02em; }
+.topbar__link { font-size: 0.95rem; }
+
+/* ---------------------------------------------------------- masthead */
+
+.masthead { background: var(--blue); color: #fff; padding: 2.5rem 0 5.5rem; }
+.masthead h1 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(2rem, 6.4vw, 3.25rem);
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.masthead p { margin: 0; font-size: 1.2rem; line-height: 1.45; max-width: 34rem; }
+
+/* ---------------------------------------------------------- the sign frame
+   The screen renders already carry the gray housing and PLATFORM labels.
+   The page adds the hood and casing they hang in. Widths are the 480 px
+   render plus the casing, so the LEDs land on whole pixels. */
+
+.sign { margin: 2.25rem auto; max-width: 490px; }
+.sign__hood {
+  height: 9px; margin: 0 -5px;
+  background: var(--hood);
+  border-radius: 3px 3px 0 0;
+}
+.sign__housing {
+  background: var(--housing);
+  padding: 5px;
+  box-shadow: 0 1px 0 #3c3d40, 0 12px 26px -8px rgba(0, 0, 0, 0.45);
+}
+.sign img { display: block; width: 100%; background: #000; }
+.sign figcaption { margin-top: 0.7rem; font-size: 0.9rem; color: var(--muted); text-align: center; }
+
+@media (min-width: 560px) {
+  /* Shown at 480 px (2x on retina): keep the LED dots crisp. */
+  .sign:not(.sign--hero) img { image-rendering: pixelated; }
+}
+
+.sign-pair { display: grid; gap: 0 1.5rem; margin: 2.25rem 0; }
+.sign-pair .sign { margin: 0 auto 1.5rem; width: 100%; }
+@media (min-width: 1100px) {
+  .sign-pair {
+    grid-template-columns: 490px 490px; justify-content: center;
+    width: 1004px; margin-left: 50%; transform: translateX(-50%);
+  }
+}
+
+/* Hero: hangs from the blue masthead on two rods. */
+.hero {
+  padding: 0 1.25rem;
+  margin-top: -3.5rem;
+}
+.sign--hero { max-width: 976px; margin: 0 auto; position: relative; }
+.sign--hero::before, .sign--hero::after {
+  content: ""; position: absolute; top: -2rem; width: 6px; height: 2rem;
+  background: linear-gradient(90deg, #2a2a2c, #6a6b6f 50%, #2a2a2c);
+}
+.sign--hero::before { left: 18%; }
+.sign--hero::after { right: 18%; }
+.sign--hero .sign__hood { height: 14px; margin: 0 -8px; }
+.sign--hero .sign__housing { padding: 8px; }
+.sign--hero figcaption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+@media (min-width: 1040px) {
+  /* 960 px: exactly 2x the render. */
+  .sign--hero img { image-rendering: pixelated; }
+}
+
+/* ---------------------------------------------------------- departure board index */
+
+main { max-width: var(--measure); margin: 0 auto; padding: 0 1.25rem 3rem; }
+
+.board { display: flex; flex-direction: column; margin: 3.5rem 0 1rem; }
+.board__panel {
+  list-style: none; margin: 0; padding: 0.8rem 0;
+  background: #0b0909;
+  background-image: radial-gradient(rgba(255, 60, 40, 0.09) 0.9px, transparent 1.3px);
+  background-size: 4px 4px;
+  border: 7px solid var(--housing);
+  border-top-width: 5px;
+}
+.board__panel a {
+  display: flex; align-items: baseline; gap: 1rem;
+  padding: 0.3rem 1.1rem;
+  color: var(--led);
+  font: 700 1.05rem/1.35 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-shadow: 0 0 3px rgba(255, 45, 25, 0.4);
+}
+.board__panel .dest { flex: 1; }
+.board__panel .min { white-space: nowrap; }
+.board__panel a:hover, .board__panel a:focus-visible {
+  color: #ff8a70; background: rgba(255, 60, 40, 0.08);
+}
+.board__panel a:hover .dest { text-decoration: underline; text-underline-offset: 0.25em; }
+.board__panel a:focus-visible { outline: 3px solid var(--yellow); outline-offset: -3px; }
+.board__hood { height: 9px; margin: 0 -5px; background: var(--hood); border-radius: 3px 3px 0 0; }
+/* Painted under the LEDs like PLATFORM 2, though it comes first in the source. */
+.board__label {
+  order: 1; display: flex; justify-content: space-between; gap: 1rem;
+  padding: 0.3rem 0.75rem 0.4rem; margin-top: -1px;
+  background: var(--housing); color: #f0f0ec;
+  box-shadow: 0 12px 26px -8px rgba(0, 0, 0, 0.45);
+  font-size: 0.85rem; font-weight: 700; line-height: 1.4;
+  letter-spacing: 0.02em; text-transform: uppercase;
+}
+.board__label h2 { margin: 0; font: inherit; }
+
+/* ---------------------------------------------------------- sections */
+
+section { --line: var(--lblue); }
+.line-yellow { --line: var(--yellow); }
+.line-orange { --line: var(--orange); }
+.line-red { --line: var(--red); }
+.line-green { --line: var(--green); }
+.line-blue { --line: var(--lblue); }
+
+h2, h3 { font-weight: 700; line-height: 1.2; }
+
+section > h2 {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin: 4.5rem 0 1.5rem;
+  padding: 0.85rem 1.1rem;
+  background: var(--bar); color: #fff;
+  font-size: clamp(1.35rem, 4.2vw, 1.75rem);
+  letter-spacing: 0.005em;
+}
+.bullet {
+  flex: none; width: 1rem; height: 1rem; border-radius: 50%;
+  background: var(--line);
+}
+
+h3 { margin: 2.6rem 0 0.6rem; font-size: 1.3rem; }
+
+p, ul, ol { margin: 0 0 1rem; }
+ul, ol { padding-left: 1.4rem; }
+li { margin: 0.35rem 0; }
+li > pre, li > .code { margin-top: 0.6rem; }
+ol > li::marker { font-weight: 700; }
+ul > li::marker { color: var(--muted); }
+strong { font-weight: 700; }
+
+code {
+  font-family: var(--mono); font-size: 0.86em;
+  background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+code.nw { white-space: nowrap; }
+
+.code { position: relative; margin: 1rem 0 1.25rem; }
+pre {
+  margin: 1rem 0 1.25rem; padding: 1rem 1.1rem;
+  background: #141414; color: #f1f1f1;
+  overflow-x: auto; font-size: 0.88rem; line-height: 1.55;
+}
+.code pre { margin: 0; padding-top: 2.6rem; }
+.code::before {
+  content: "Terminal"; position: absolute; left: 0; right: 0; top: 0; height: 2.1rem;
+  padding: 0.55rem 0 0 1.1rem;
+  font: 700 0.72rem/1 var(--sans); letter-spacing: 0.08em; text-transform: uppercase;
+  color: #9a9a9a; border-bottom: 1px solid #2c2c2c; pointer-events: none;
+}
+pre code { background: none; padding: 0; font-size: inherit; overflow-wrap: normal; }
+.copy {
+  position: absolute; top: 0.35rem; right: 0.4rem;
+  font: 700 0.75rem/1 var(--sans); letter-spacing: 0.04em;
+  color: #fff; background: #333; border: 1px solid #555; border-radius: 3px;
+  padding: 0.4rem 0.6rem; cursor: pointer;
+}
+.copy:hover { background: #444; }
+.copy:focus-visible { outline-color: var(--yellow); }
+
+/* ---------------------------------------------------------- sign text
+   What the sign itself shows, set red on black like the sign. */
+
+.led-msg {
+  display: inline-block; vertical-align: top;
+  padding: 0.45rem 0.7rem;
+  background: #0b0909;
+  background-image: radial-gradient(rgba(255, 60, 40, 0.09) 0.9px, transparent 1.3px);
+  background-size: 4px 4px;
+  border: 3px solid var(--housing); border-top-color: var(--hood);
+  color: var(--led);
+  font: 700 0.85rem/1.4 var(--mono);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 3px rgba(255, 45, 25, 0.4);
+}
+.led-msg__line { display: block; white-space: nowrap; }
+.led-msg em { font-style: italic; color: #ff8a70; letter-spacing: 0.02em; }
+div.led-msg { display: table; margin: 1rem 0 1.25rem; padding: 0.7rem 1.1rem; font-size: 1rem; border-width: 4px; border-top-width: 7px; }
+
+/* ---------------------------------------------------------- tables */
+
+.table-wrap { margin: 1.25rem 0 1.5rem; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.95rem; line-height: 1.45; }
+th {
+  text-align: left; background: var(--bar); color: #fff;
+  padding: 0.6rem 0.75rem; font-weight: 700;
+}
+td { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+tr.total td { border-top: 2px solid var(--ink); border-bottom: 0; }
+td a { overflow-wrap: anywhere; }
+.t-display-pin td:nth-child(-n+2) { font-family: var(--mono); font-weight: 700; white-space: nowrap; }
+.t-part td:nth-child(2), .t-part td:nth-child(3) a { white-space: nowrap; }
+.t-message td:first-child { width: 1%; }
+
+@media (max-width: 600px) {
+  /* Stack wide tables into cards on phones. */
+  .t-part thead, .t-message thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .t-part tr, .t-message tr { display: block; padding: 0.85rem 0; border-bottom: 1px solid var(--rule); }
+  .t-part td, .t-message td { display: block; padding: 0.1rem 0; border: 0; }
+  .t-part td:not(:first-child)::before {
+    content: attr(data-label) ": "; color: var(--muted); font-size: 0.85rem;
+  }
+  .t-part td:first-child { font-weight: 700; }
+  .t-message td:first-child { width: auto; margin-bottom: 0.4rem; }
+  .t-part tr:first-child, .t-message tr:first-child { border-top: 3px solid var(--bar); }
+  .t-part tr.total { border-top: 2px solid var(--ink); border-bottom: 0; }
+  .t-part tr.total td { border: 0; }
+  .t-display-pin th, .t-display-pin td { padding-left: 0.5rem; padding-right: 0.5rem; }
+  table { font-size: 0.92rem; }
+}
+
+/* ---------------------------------------------------------- sheets (slides, contact sheets) */
+
+.sheet { margin: 2rem 0; }
+.sheet__pan { border: 1px solid var(--rule); }
+.sheet__pan a { display: block; }
+.sheet img { display: block; width: 100%; }
+.sheet__hint { display: none; }
+@media (max-width: 759px) {
+  /* The slides are too dense to read at phone width: let them pan. */
+  .sheet { margin-right: -1.25rem; }
+  .sheet__pan { overflow-x: auto; border-right: 0; -webkit-overflow-scrolling: touch; }
+  .sheet img { width: 50rem; max-width: none; }
+  .sheet figcaption { margin-right: 1.25rem; }
+  .sheet__hint { display: block; font-size: 0.8rem; margin-top: 0.15rem; }
+}
+.sheet figcaption { margin-top: 0.6rem; font-size: 0.9rem; color: var(--muted); }
+.sheet figcaption a { margin-left: 0.4rem; font-weight: 700; }
+
+/* ---------------------------------------------------------- footer */
+
+.footer { background: var(--bar); color: #ddd; padding: 1.5rem 0; font-size: 0.9rem; }
+.footer p { margin: 0; }
+.footer a { color: #fff; }
+.footer a:focus-visible { outline-color: var(--yellow); }
+
+@media (min-width: 760px) {
+  body { font-size: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}

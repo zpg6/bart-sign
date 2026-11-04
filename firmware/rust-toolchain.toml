@@ -1,0 +1,5 @@
+[toolchain]
+# Xtensa Rust from espup. Use a *stable* esp-rs release: the 1.98/1.99
+# pre-releases miscompile ESP32 startup (the chip hangs before main and the
+# RTC watchdog reboots it). esp-hal 1.2 needs >= 1.95.
+channel = "esp-1.97"

@@ -1,0 +1,109 @@
+[package]
+name = "bart-sign"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+
+# Standalone project: do not join the embassy workspace this directory sits in.
+[workspace]
+
+[[bin]]
+name = "bart-sign"
+path = "./src/bin/main.rs"
+test = false
+bench = false
+
+[lib]
+test = false
+bench = false
+
+[features]
+# Personal builds only: the private boot mark from
+# sign-core/private/ba_mark.rs and the matching setup-page badge. flash.sh
+# turns it on when that file exists.
+ba-mark = ["sign-core/ba-mark"]
+
+[dependencies]
+# --- esp-hal family (all from the esp-hal 1.2 release train) ---
+esp-hal = { version = "~1.2.2", features = ["esp32", "unstable", "log-04"] }
+esp-rtos = { version = "0.4.0", features = [
+    "esp32",
+    "embassy",
+    "esp-radio",
+    "esp-alloc",
+    "log-04",
+] }
+esp-radio = { version = "=1.0.0-beta.1", features = [
+    "esp32",
+    "wifi",
+    "esp-alloc",
+    "unstable",
+    "log-04",
+] }
+esp-bootloader-esp-idf = { version = "0.6.0", features = ["esp32", "log-04"] }
+esp-alloc = { version = "0.11.0", features = ["esp32"] }
+esp-backtrace = { version = "0.20.0", features = ["esp32", "panic-handler", "println"] }
+esp-println = { version = "0.18.0", features = ["esp32", "log-04"] }
+log = "0.4.27"
+critical-section = "1.2.0"
+
+# --- embassy ---
+embassy-executor = { version = "0.10.0", features = ["log"] }
+embassy-time = { version = "0.5.1", features = ["log"] }
+embassy-sync = "0.8.0"
+embassy-net = { version = "0.9.1", features = [
+    "proto-ipv4",
+    "medium-ethernet",
+    "dhcpv4",
+    "dns",
+    "tcp",
+    "udp",
+    "log",
+] }
+embedded-io-async = "0.7.0"
+static_cell = "2.1.1"
+
+# --- TLS (MbedTLS 3.x, prebuilt for xtensa-esp32-none-elf) ---
+# Default features ("tls" bundle) are kept on purpose: any change to the
+# algorithm set or to the ssl-*-content-len-* features forces an on-the-fly
+# MbedTLS rebuild, which needs an Xtensa-capable clang + cmake + ninja.
+mbedtls-rs = { version = "0.3.0", features = ["esp32", "embassy-time", "log"] }
+
+# --- display (ST7796S over SPI) ---
+embedded-hal = "1.0.0"
+embedded-hal-bus = "0.3.0"
+mipidsi = "0.10.0"
+embedded-graphics = "0.8.2"
+
+# --- sign layout, fonts, ETD parsing and LED rendering (host-testable) ---
+sign-core = { path = "../sign-core" }
+
+# --- JSON parsing of the ETD response ---
+serde = { version = "1.0.229", default-features = false, features = ["derive"] }
+serde-json-core = "0.7.0"
+heapless = "0.9.3"
+
+# --- settings in flash ---
+esp-storage = { version = "0.10.0", features = ["esp32", "embedded-storage"] }
+embedded-storage = "0.3.1"
+
+# --- setup-mode DHCP server (as in esp-hal's access point examples) ---
+edge-dhcp = "0.8.0"
+edge-nal = "0.7.0"
+edge-nal-embassy = { version = "0.9.0", default-features = false, features = ["proto-ipv4", "medium-ethernet", "udp"] }
+
+[profile.dev]
+# The default debug profile is too slow and too big for the ESP32.
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1
+debug = 2
+lto = "fat"
+opt-level = "s"
+
+# MbedTLS hardware-accel glue lives in esp-hal; it is much faster at -O3.
+[profile.release.package.esp-hal]
+opt-level = 3
+[profile.dev.package.esp-hal]
+opt-level = 3

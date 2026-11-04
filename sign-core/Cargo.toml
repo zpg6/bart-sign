@@ -1,0 +1,22 @@
+[package]
+name = "sign-core"
+version = "0.1.0"
+edition = "2021"
+description = "BART platform sign: API parsing, LED-matrix layout and dot rendering (no_std, host-testable)"
+publish = false
+
+[features]
+# Personal builds only: draw a private mark from private/ba_mark.rs (not in
+# the repository) instead of the public typed title. Off by default.
+ba-mark = []
+
+[dependencies]
+heapless = { version = "0.9", features = ["serde"] }
+serde = { version = "1", default-features = false, features = ["derive"] }
+serde-json-core = "0.7"
+
+[dev-dependencies]
+png = "0.18"
+
+# Standalone: never join a parent workspace.
+[workspace]
