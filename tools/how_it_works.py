@@ -33,7 +33,7 @@ _spec.loader.exec_module(wd)
 text, rect, circle, esc, tw, chip = wd.text, wd.rect, wd.circle, wd.esc, wd.tw, wd.chip
 BLUE, INK, MUTED, FONT, CHROME = wd.BLUE, wd.INK, wd.MUTED, wd.FONT, wd.CHROME
 
-W, H = 1310, 872
+W, H = 1376, 872
 YELLOW, YELLOW_D = "#FFD200", "#A88A00"
 ORANGE, ORANGE_D = "#F7931E", "#A65A00"
 LINES = [("#D7261E", "Red"), ("#F7931E", "Orange"), ("#FFD200", "Yellow"), ("#339933", "Green"), ("#0099CC", "Blue")]
@@ -99,16 +99,12 @@ def display_front(o, x0, y0, k):
     # a soft reflection across the glass
     o.append(f'<path d="M{gx0 + gw * 0.55:g},{gy0:g} L{gx0 + gw * 0.72:g},{gy0:g} L{gx0 + gw * 0.42:g},{gy0 + gh:g} '
              f'L{gx0 + gw * 0.25:g},{gy0 + gh:g}Z" fill="#fff" opacity="0.05"/>')
-    # The 9-pin header sits on the left short edge, SDA-O at the top, GND at
-    # the bottom (the back view's "centre-right" header, seen from the front
-    # and turned landscape: 39-77% of the edge).
-    pins = {}
-    hx = x0 + 2.9 * k
-    for i, n_ in enumerate(wd.HEADER):
-        py = y0 + h * 0.387 + i * 2.54 * k
-        pins[n_] = (hx, py)
-        o.append(rect(hx - 3.2, py - 3.2, 6.4, 6.4, "url(#gold)", rx=1, stroke="#8a6d22", sw=0.6))
-        o.append(text(hx + 6, py + 1.8, n_, 5.2, wd.SILK, "bold", "start", ' opacity="0.9"'))
+    # The 9-pin header sits on the left short edge (the back view's
+    # "centre-right" header, seen from the front and turned landscape: about
+    # 39-77% of the edge). Drawn as a plain strip: this picture isn't about pins.
+    hy0, hy1 = y0 + h * 0.36, y0 + h * 0.80
+    o.append(rect(x0 + 1.2 * k, hy0, 3.6 * k, hy1 - hy0, "#151515", rx=2))
+    pins = (x0 + 3 * k, hy0, hy1)
     return w, h, n, pins
 
 
@@ -229,19 +225,24 @@ def build():
     ecx = (ex0 + ex1) / 2
     k = 3.4
     dw, dh = 94.84 * k, 59.19 * k
-    dx0, dy0 = ex1 + 58, yc - dh / 2
+    dx0, dy0 = ex1 + 124, yc - dh / 2
     dw, dh, n_lit, pins = display_front(o, dx0, dy0, k)
-    # eight straight jumpers from under the ESP32 into the header
-    for n in wd.HEADER:
-        if n not in wd.WIRES:
-            continue
-        colour, outline = wd.WIRES[n][4], wd.WIRES[n][5]
-        px, py = pins[n]
-        d = f"M{ex1 - 30:g},{py:g} L{px:g},{py:g}"
-        o.append(f'<path d="{d}" fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round"/>')
-        o.append(f'<path d="{d}" fill="none" stroke="{outline}" stroke-width="4.6" stroke-linecap="round"/>')
-        o.append(f'<path d="{d}" fill="none" stroke="{colour}" stroke-width="3" stroke-linecap="round"/>')
-        o.append(circle(px, py, 2.8, colour, outline, 1))
+    # the eight jumpers as one neutral bundle: from under the ESP32 into the
+    # header strip; which wire goes where is the wiring diagram's job
+    hx, hy0, hy1 = pins
+    by = (hy0 + hy1) / 2
+    bw_ = 26
+    x_a, x_b = ex1 - 40, hx
+    o.append(rect(x_a, by - bw_ / 2 - 3, x_b - x_a, bw_ + 6, "#fff"))
+    o.append(rect(x_a, by - bw_ / 2, x_b - x_a, bw_, "#2b2d31"))
+    for kk in range(8):
+        yy = by - bw_ / 2 + 3 + kk * (bw_ - 6) / 7
+        o.append(f'<line x1="{x_a:g}" y1="{yy:g}" x2="{x_b:g}" y2="{yy:g}" stroke="#5b5f66" stroke-width="1.2"/>')
+    o.append(rect(dx0 + 1.2 * k, hy0, 3.6 * k, hy1 - hy0, "#151515", rx=2))     # header strip on top
+    mx = (ex1 + dx0) / 2
+    o.append(rect(mx - 52, by - 19, 104, 38, "#000", rx=4, stroke="#fff", sw=1.5))
+    o.append(text(mx, by - 2, "8 jumper wires", 12.5, "#fff", "bold", "middle"))
+    o.append(text(mx, by + 12, "see Wiring", 10.5, "#c9ccd0", "normal", "middle"))
     o.append(f'<g transform="translate({etx:g},{ety:g}) scale({s_esp:g})">')
     wd.draw_esp32(o)
     o.append("</g>")
