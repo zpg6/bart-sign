@@ -21,7 +21,7 @@ OUT_SVG = os.path.join(ROOT, "docs", "assets", "wiring.svg")
 OUT_PNG = os.path.join(ROOT, "docs", "assets", "wiring.png")
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
-W, H = 1200, 1040
+W, H = 1200, 1135
 FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif"
 BLUE = "#0064a8"   # bart.gov blue
 INK = "#1b1b1b"
@@ -70,7 +70,7 @@ def pin_y(i):
 
 
 # Display, back view, portrait, header at the top. 59.19 x 94.84 mm.
-DX0, DY0 = 800, 420
+DX0, DY0 = 800, 516
 DX1, DY1 = DX0 + 360, DY0 + 360 * 94.84 / 59.19
 HDR_PITCH = 24                     # drawn a little wider than 2.54 mm
 HDR_Y = DY0 + 12
@@ -87,7 +87,7 @@ def hdr_x(name):
 # board and climbs the far side. Lane order is the reverse of header order,
 # so the header end stays crossing-free; the crossings all land in the
 # channel, where each one is a clean right angle.
-LANE_TOP, LANE_STEP = 296, 14
+LANE_TOP, LANE_STEP = 302, 27
 LANE_ORDER = ["GND", "VCC", "SCL", "SDA", "RST", "DC", "CS", "BL"]   # top to bottom
 COL_X0, COL_STEP = 655, 14
 COL_ORDER = ["SCL", "GND", "VCC", "CS", "SDA", "DC", "RST", "BL"]    # board side outward
@@ -366,148 +366,149 @@ def fpc(o, x0, y0, w, h, labels, label_y, label_dir):
 def draw_display(o):
     o.append('<g id="display">')
     o.append('<defs><linearGradient id="kapton" x1="0" y1="0" x2="0" y2="1">'
-             '<stop offset="0" stop-color="#d79a2c"/><stop offset="1" stop-color="#b9761a"/></linearGradient></defs>')
-    w = DX1 - DX0
-    o.append(rect(DX0 + 2, DY0 + 6, w, DY1 - DY0, "#000", rx=12, extra=' opacity="0.13"'))
-    o.append(rect(DX0, DY0, w, DY1 - DY0, "#1f5fb0", rx=12, stroke="#14457f", sw=1.5))
+             '<stop offset="0" stop-color="#dba33a"/><stop offset="1" stop-color="#bf7c1d"/></linearGradient></defs>')
+    w, h = DX1 - DX0, DY1 - DY0
 
-    # thin traces fanning from the bottom connector up to the top one, in
-    # two bundles that skirt the jumper table and the regulator parts
+    def X(f):          # fraction of the board width
+        return DX0 + w * f
+
+    def Y(f):          # fraction of the board height, top = 0
+        return DY0 + h * f
+
+    o.append(rect(DX0 + 2, DY0 + 6, w, h, "#000", rx=12, extra=' opacity="0.13"'))
+    o.append(rect(DX0, DY0, w, h, "#1f5fb0", rx=12, stroke="#14457f", sw=1.5))
+
+    # trace bundles from about 45% down into the glass's flex
     tr = []
-    for k in range(7):
-        xb = DX0 + 150 + k * 6          # 8080-8P end
-        xm = DX0 + 244 + k * 3.2        # gap between the table and U8/U7
-        xt = DX0 + 150 + k * 9          # 8080-16P end
-        tr.append(f"M{xb:g},{DY0 + 452:g} V{DY0 + 440 - k * 3:g} L{xm:g},{DY0 + 410 - k * 3:g} "
-                  f"V{DY0 + 300 + k * 3:g} L{xt:g},{DY0 + 232 + k * 3:g} V{DY0 + 200:g}")
-    for k in range(5):
-        xb = DX0 + 222 + k * 5
-        xm = DX0 + 338 + k * 3.2
-        xt = DX0 + 214 + k * 6
-        tr.append(f"M{xb:g},{DY0 + 452:g} V{DY0 + 444 - k * 3:g} L{xm:g},{DY0 + 432 - k * 3:g} "
-                  f"V{DY0 + 252 - k * 3:g} L{xt:g},{DY0 + 214:g} V{DY0 + 200:g}")
+    for k in range(10):
+        xs = X(0.10 + k * 0.035)
+        xe = X(0.42 + k * 0.034)
+        tr.append(f"M{xs:g},{Y(0.45):g} V{Y(0.50) + k * 2:g} L{xe:g},{Y(0.57) + k * 1.2:g} V{Y(0.62):g}")
+    for k in range(8):
+        xs = X(0.93 - k * 0.03)
+        xe = X(0.74 - k * 0.025)
+        tr.append(f"M{xs:g},{Y(0.45):g} V{Y(0.50) + k * 2:g} L{xe:g},{Y(0.57) + k * 1.2:g} V{Y(0.62):g}")
+    for k in range(9):               # ZIF to the 8080-8P socket
+        xs = X(0.44 + k * 0.035)
+        xe = X(0.45 + k * 0.035)
+        tr.append(f"M{xs:g},{Y(0.79):g} L{xe:g},{Y(0.83):g}")
     o.append(f'<path d="{" ".join(tr)}" fill="none" stroke="#174c90" stroke-width="1.5" opacity="0.85"/>')
 
     for hx in (DX0 + 16, DX1 - 16):
         for hy in (DY0 + 16, DY1 - 16):
             hole(o, hx, hy, 8.5)
 
-    # frame tabs at about 25% and 73% of the height; "ST779.." peeks out
-    # from under the top right one
-    o.append(text(DX1 - 14, DY0 + (DY1 - DY0) * 0.25 + 4, "ST7796", 11, SILK, "bold", "end", ' opacity="0.85"'))
-    for f in (0.25, 0.73):
-        ty = DY0 + (DY1 - DY0) * f
-        o.append(rect(DX0 - 3, ty - 13, 12, 26, "#0f0f10", rx=1.5))
-        o.append(rect(DX1 - (30 if f == 0.25 else 9), ty - 13, 33 if f == 0.25 else 12, 26, "#0f0f10", rx=1.5))
-
-    # 8080-16P socket, about 60% of the width, label on its right
-    fpc(o, DX0 + 30, DY0 + 176, 216, 16, FPC16, DY0 + 196, 1)
-    o.append(text(DX0 + 254, DY0 + 189, "8080-16P", 12, SILK, "bold"))
-
-    # 3.5"TFT
-    o.append(text(DX0 + 180, DY0 + 276, '3.5"TFT', 44, SILK, "bold", "middle"))
-
-    # IM jumper table, left-middle. The SPI column (1,1,1) is the setting.
-    x0, y0 = DX0 + 14, DY0 + 324
-    cols = ["P8", "P16", "SPI", "SPI3"]
-    vals = {"IM0": "1011", "IM1": "1110", "IM2": "0011"}
-    cw, rh, gx = 33, 22, x0 + 92
-    for k in (1, 2, 3):
-        o.append(rect(gx + cw * k + cw / 2 - 4, y0 - 26, 8, 8, SILK))
-    spi = gx + cw * 2
-    o.append(rect(spi + 1, y0 - 15, cw - 2, rh * 4 - 1, "#fff", rx=2))
-    o.append(text(x0 + 33, y0, "0", 9, SILK, "bold", "middle"))
-    o.append(text(x0 + 47, y0, "1", 9, SILK, "bold", "middle"))
-    for k, c in enumerate(cols):
-        o.append(text(gx + cw * k + cw / 2, y0, c, 11, BLUE if c == "SPI" else SILK, "bold", "middle"))
-    for r, (im, v) in enumerate(vals.items()):
-        y = y0 + rh * (r + 1)
-        o.append(rect(x0 - 4, y - 9, 20, 9, "#0b0b0c", rx=1))
-        o.append(text(x0 + 6, y - 2.2, "103", 5.6, "#c9ccd0", "bold", "middle"))
-        o.append(rect(x0 + 29, y - 10, 8, 9, "#d8b866", rx=1))
-        o.append(rect(x0 + 43, y - 10, 8, 9, "#d8b866", rx=1))
-        o.append(text(x0 + 72, y, im, 11, SILK, "bold", "middle"))
-        for k, ch in enumerate(v):
-            hi = cols[k] == "SPI"
-            o.append(text(gx + cw * k + cw / 2, y, ch, 12 if hi else 11, BLUE if hi else SILK, "bold", "middle"))
-    grid = []
-    for k in range(5):
-        grid.append(f"M{gx + cw * k:g},{y0 - 15:g} V{y0 + rh * 3 + 6:g}")
-    for r in range(4):
-        grid.append(f"M{x0 + 56:g},{y0 + 6 + rh * r:g} H{gx + cw * 4:g}")
-    o.append(f'<path d="{" ".join(grid)}" fill="none" stroke="{SILK}" stroke-width="1" opacity="0.7"/>')
-
-    # right-middle: U8 (SOT-23-3) and U7 (SOT-23) with their passives
-    def sot(x, y, name):
-        o.append(rect(x - 11, y - 7, 22, 14, "#0e0f11", rx=1.5, stroke="#3a3d42", sw=0.8))
-        for lx in (x - 7, x + 7):
-            o.append(rect(lx - 2, y + 7, 4, 4, "#aeb3b9"))
-        o.append(rect(x - 2, y - 11, 4, 4, "#aeb3b9"))
-        o.append(text(x, y + 24, name, 8, SILK, "bold", "middle"))
-
-    def part(x, y, name, res=False, label_dy=-7):
-        o.append(rect(x - 6, y - 3, 12, 6, "#0b0b0c" if res else "#c8a27a", rx=1, stroke="#3d3a33", sw=0.6))
-        o.append(text(x, y + label_dy, name, 6.5, SILK, "bold", "middle"))
-    ux, uy = DX0 + 300, DY0 + 336
-    sot(ux, uy, "U8")
-    part(ux - 30, uy - 6, "C17")
-    part(ux - 30, uy + 10, "C18", label_dy=13)
-    part(ux + 30, uy - 6, "C19")
-    part(ux + 30, uy + 10, "C20", label_dy=13)
-    vx, vy = DX0 + 300, DY0 + 400
-    sot(vx, vy, "U7")
-    part(vx - 30, vy - 6, "C16")
-    part(vx + 30, vy - 6, "R41", res=True)
-    part(vx + 30, vy + 10, "R40", res=True, label_dy=13)
-    part(vx - 30, vy + 10, "R39", res=True, label_dy=13)
-    part(vx, vy - 22, "R18", res=True)
-
-    # bottom: 8080-8P socket (labels above), then the glass's flex in a ZIF
-    fpc(o, DX0 + 112, DY0 + 468, 140, 15, FPC8, DY0 + 462, -1)
-    o.append(text(DX0 + 258, DY0 + 480, "8080-8P", 12, SILK, "bold"))
-    zx0, zx1, zy = DX0 + 86, DX0 + 274, DY0 + 506
-    o.append(rect(zx0 + 12, zy + 14, zx1 - zx0 - 24, DY1 - zy - 14, "url(#kapton)", stroke="#8e5a12", sw=1))
-    for k in range(20):
-        lx = zx0 + 20 + k * (zx1 - zx0 - 40) / 19
-        o.append(f'<line x1="{lx:g}" y1="{zy + 16}" x2="{lx:g}" y2="{DY1 - 1:g}" stroke="#a8691a" stroke-width="1" opacity="0.6"/>')
-    o.append(text(zx0 + 20, zy + 46, "40", 10, "#5e3906", "bold", "start"))
-    o.append(text(zx1 - 20, zy + 46, "1", 10, "#5e3906", "bold", "end"))
-    o.append(rect(zx0, zy, zx1 - zx0, 10, "#111", rx=1.5))
-    o.append(rect(zx0 + 2, zy + 10, zx1 - zx0 - 4, 6, "#f2f0ea", rx=1))
-
-    # 9-pin header: black strip, gold pins, "9" and "SPI" at the ends
+    # 9-pin header at the very top edge, "9" and "SPI" at its ends
     hx0, hx1 = hdr_x("SDA-O") - 14, hdr_x("GND") + 14
     o.append(rect(hx0, DY0 + 2, hx1 - hx0, 20, "#121212", rx=2))
     for n in HEADER:
         x = hdr_x(n)
         o.append(rect(x - 5, HDR_Y - 5, 10, 10, "url(#gold)", rx=1, stroke="#8a6d22", sw=0.8))
     o.append(text(hx0 - 4, HDR_Y + 4, "9", 11, SILK, "bold", "end"))
-    o.append(text(hx1 + 5, HDR_Y + 30, "SPI", 11, SILK, "bold", "start"))
-    # silk under each pin, reading top to bottom
+    o.append(text(hx1 + 4, Y(0.075), "SPI", 11, SILK, "bold", "start"))
+    # silk under each pin, reading top to bottom, down to about 9%
     for n in HEADER:
-        o.append(rtext(hdr_x(n) - 3.8, DY0 + 27, n, 10.5, 90, anchor="start"))
+        o.append(rtext(hdr_x(n) - 3.4, DY0 + 25, n, 9, 90, anchor="start"))
+
+    # 8080-16P socket at 10-13%, its tiny labels just below
+    fpc(o, X(0.06), Y(0.10), w * 0.62, Y(0.13) - Y(0.10), FPC16, Y(0.136), 1)
+    o.append(text(X(0.70), Y(0.127), "8080-16P", 11, SILK, "bold"))
+
+    # frame tabs at 18% and 77% on both edges; "ST779.." under the top right one
+    o.append(text(DX1 - 12, Y(0.18) + 4, "ST7796", 10.5, SILK, "bold", "end", ' opacity="0.85"'))
+    for f in (0.18, 0.77):
+        o.append(rect(DX0 - 3, Y(f) - 13, 12, 26, "#0f0f10", rx=1.5))
+        o.append(rect(DX1 - (26 if f == 0.18 else 9), Y(f) - 13, 29 if f == 0.18 else 12, 26, "#0f0f10", rx=1.5))
+
+    # 3.5"TFT at 21-24%, centred slightly right
+    o.append(text(X(0.55), Y(0.24), '3.5"TFT', 28, SILK, "bold", "middle"))
+
+    # IM jumper table, 30-42% on the left half; the SPI column is the setting
+    tx0, tx1, ty0, ty1 = X(0.08), X(0.52), Y(0.30), Y(0.42)
+    rh = (ty1 - ty0) / 4
+    cw = (tx1 - tx0 - 58) / 4
+    gx = tx1 - cw * 4
+    cols = ["P8", "P16", "SPI", "SPI3"]
+    vals = {"IM0": "1011", "IM1": "1110", "IM2": "0011"}
+    for k in (1, 2, 3):
+        o.append(rect(gx + cw * k + cw / 2 - 3.5, Y(0.29) - 4, 7, 7, SILK))
+    spi = gx + cw * 2
+    o.append(rect(spi + 1, ty0 + 1, cw - 2, ty1 - ty0 - 2, "#fff", rx=2))
+    o.append(text(tx0 + 19, ty0 + rh - 4, "0", 8, SILK, "bold", "middle"))
+    o.append(text(tx0 + 29, ty0 + rh - 4, "1", 8, SILK, "bold", "middle"))
+    for k, c in enumerate(cols):
+        o.append(text(gx + cw * k + cw / 2, ty0 + rh - 4, c, 9.5, BLUE if c == "SPI" else SILK, "bold", "middle"))
+    for r, (im, v) in enumerate(vals.items()):
+        yb = ty0 + rh * (r + 2) - 4
+        o.append(rect(tx0 - 14, yb - 8, 14, 7, "#0b0b0c", rx=1))
+        o.append(text(tx0 - 7, yb - 2.6, "103", 4.6, "#c9ccd0", "bold", "middle"))
+        o.append(rect(tx0 + 16, yb - 8, 6, 7, "#d8b866", rx=1))
+        o.append(rect(tx0 + 26, yb - 8, 6, 7, "#d8b866", rx=1))
+        o.append(text(tx0 + 46, yb, im, 9.5, SILK, "bold", "middle"))
+        for k, ch in enumerate(v):
+            hi = cols[k] == "SPI"
+            o.append(text(gx + cw * k + cw / 2, yb, ch, 10.5 if hi else 9.5, BLUE if hi else SILK, "bold", "middle"))
+    grid = [f"M{gx + cw * k:g},{ty0:g} V{ty1:g}" for k in range(5)]
+    grid += [f"M{tx0 + 34:g},{ty0 + rh * r:g} H{tx1:g}" for r in range(1, 5)]
+    o.append(f'<path d="{" ".join(grid)}" fill="none" stroke="{SILK}" stroke-width="0.9" opacity="0.7"/>')
+
+    # U8 (SOT-23-3) at 30-36% and U7 (SOT-23) at 37-42%, at 80-90% of the width
+    def sot(x, y, name):
+        o.append(rect(x - 9, y - 5.5, 18, 11, "#0e0f11", rx=1.5, stroke="#3a3d42", sw=0.8))
+        for lx in (x - 5.5, x + 5.5):
+            o.append(rect(lx - 1.5, y + 5.5, 3, 3, "#aeb3b9"))
+        o.append(rect(x - 1.5, y - 8.5, 3, 3, "#aeb3b9"))
+        o.append(text(x - 12, y + 3, name, 7, SILK, "bold", "end"))
+
+    def part(x, y, name, res=False, side=-1):
+        o.append(rect(x - 4.5, y - 2.5, 9, 5, "#0b0b0c" if res else "#c8a27a", rx=0.8, stroke="#3d3a33", sw=0.5))
+        o.append(text(x + side * 7, y + 2, name, 5.8, SILK, "bold", "end" if side < 0 else "start"))
+    sot(X(0.85), Y(0.33), "U8")
+    part(X(0.79), Y(0.305), "C17")
+    part(X(0.92), Y(0.305), "C18", side=1)
+    part(X(0.79), Y(0.355), "C20")
+    part(X(0.92), Y(0.355), "C19", side=1)
+    sot(X(0.85), Y(0.398), "U7")
+    part(X(0.79), Y(0.376), "C16")
+    part(X(0.92), Y(0.376), "R41", True, side=1)
+    part(X(0.79), Y(0.42), "R39", True)
+    part(X(0.92), Y(0.42), "R40", True, side=1)
+    part(X(0.92), Y(0.398), "R18", True, side=1)
+
+    # the glass's flex, 62-74%, into its ZIF (black, white base) at 75-79%
+    rx0, rx1 = X(0.38), X(0.77)
+    o.append(rect(rx0, Y(0.62), rx1 - rx0, Y(0.755) - Y(0.62), "url(#kapton)", stroke="#8e5a12", sw=1))
+    for k in range(22):
+        lx = rx0 + 6 + k * (rx1 - rx0 - 12) / 21
+        o.append(f'<line x1="{lx:g}" y1="{Y(0.62) + 1:g}" x2="{lx:g}" y2="{Y(0.75):g}" stroke="#a8691a" stroke-width="0.9" opacity="0.55"/>')
+    o.append(text(rx0 + 8, Y(0.715), "40", 10, "#5e3906", "bold", "start"))
+    o.append(text(rx1 - 8, Y(0.715), "1", 10, "#5e3906", "bold", "end"))
+    o.append(rect(rx0 - 10, Y(0.75), rx1 - rx0 + 20, Y(0.775) - Y(0.75), "#111", rx=1.5))
+    o.append(rect(rx0 - 8, Y(0.775), rx1 - rx0 + 16, Y(0.79) - Y(0.775), "#f2f0ea", rx=1))
+
+    # 8080-8P socket at the very bottom (88-93%), labels just above, name to its left
+    fpc(o, X(0.40), Y(0.88), w * 0.40, Y(0.93) - Y(0.88), FPC8, Y(0.87), -1)
+    o.append(text(X(0.38), Y(0.915), "8080-8P", 11, SILK, "bold", "end"))
     o.append("</g>")
 
 
 def draw_display_tags(o):
-    """Readable chips fanned out below the header's own silk labels."""
-    size, fan = 15, 37
-    c0 = DX0 + 180 - fan * 4
-    leads = []
-    for i, n in enumerate(HEADER):
-        x, c = hdr_x(n), c0 + fan * i
-        cy = DY0 + 98 if i % 2 == 0 else DY0 + 128
-        top = cy - size * 0.71
-        leads.append(f"M{x:g},{DY0 + 66:g} L{c:g},{DY0 + 82:g} V{top:g}")
-    o.append(f'<path d="{" ".join(leads)}" fill="none" stroke="#fff" stroke-width="1.3" opacity="0.9"/>')
-    for i, n in enumerate(HEADER):
-        c = c0 + fan * i
-        cy = DY0 + 98 if i % 2 == 0 else DY0 + 128
-        s, w, h = chip(c, cy, n, size, minw=40, dim=n not in WIRES)
+    """Readable chips on each wire just after it leaves its pin, stepped
+    up the lanes; SDA-O, which has no wire, gets a dim chip on the board."""
+    size = 14
+    for n in WIRES:
+        x = hdr_x(n)
+        ly = LANE_TOP + LANE_STEP * LANE_ORDER.index(n)
+        colour, outline = WIRES[n][4], WIRES[n][5]
+        wch = max(36, tw(n, size) + size * 0.75)
+        cx = x - 14 - wch / 2
+        s, wc, hc = chip(cx, ly, n, size, minw=36)
+        o.append(rect(cx - wc / 2 - 2, ly - hc / 2 - 2, wc + 4, hc + 4, colour, rx=4,
+                      extra=f' stroke="{outline}" stroke-width="1"'))
         o.append(s)
-        if n in WIRES:
-            colour, outline = WIRES[n][4], WIRES[n][5]
-            o.append(rect(c - w / 2, cy + h / 2 - 1, w, 5, colour, extra=f' stroke="{outline}" stroke-width="1"'))
+    s, wc, hc = chip(DX0 + 52, DY0 + 46, "SDA-O", 12, dim=True)
+    o.append(s)
+    o.append(f'<path d="M{DX0 + 52 + wc / 2:g},{DY0 + 46} H{hdr_x("SDA-O") - 6:g}" stroke="#fff" stroke-width="1.2" opacity="0.8"/>')
 
 
 # ---------------------------------------------------------------- wires, legend
@@ -587,8 +588,8 @@ def build():
     o.append(text(36, 112, "8 female-to-female jumper wires", 19, MUTED))
     draw_esp32(o)
     draw_display(o)
-    draw_display_tags(o)
     draw_wires(o)
+    draw_display_tags(o)
     draw_esp_tags(o)
     draw_legend(o)
     # board captions
@@ -597,8 +598,8 @@ def build():
     o.append(text(DX0, DY1 + 26, "Display", 16, INK, "bold"))
     o.append(text(DX0 + 64, DY1 + 26, "back side", 15, MUTED))
     # numbered markers on the boards, explained in the cards below
-    badge(o, DX0 + 44, DY0 + 52, 1)
-    badge(o, DX0 + 26, DY0 + 300, 2)
+    badge(o, hdr_x("GND") + 34, LANE_TOP + LANE_STEP * 2, 1)
+    badge(o, DX0 + 16, DY0 + (DY1 - DY0) * 0.285, 2)
     badge(o, CX - 72, BY1 + 10, 3)
     y = UNDER["BL"][0] + 22
     callout(o, 30, y, 1, "SCL/SDA here means SPI, not I2C")
