@@ -70,7 +70,7 @@ def inline(md):
 
 # ---------------------------------------------------------------- figures
 
-IMG_RE = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)\)")
+IMG_RE = re.compile(r'!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)')
 
 
 def is_sign(src):
@@ -87,6 +87,18 @@ def sign_figure(alt, src, hero=False):
             f'<figcaption aria-hidden="true">{html.escape(alt)}</figcaption></figure>')
 
 
+def is_photo(src):
+    """Camera photos (the real signs, the finished build): shown as photos."""
+    return "/photos/" in src or "/reference/" in src
+
+
+def photo_figure(alt, src, caption=None):
+    """A photo at its own proportions, with a visible caption (e.g. credit)."""
+    cap = inline(caption) if caption else html.escape(alt)
+    return (f'<figure class="photo"><img src="{src}" alt="{html.escape(alt)}" loading="lazy">'
+            f'<figcaption>{cap}</figcaption></figure>')
+
+
 def sheet_figure(alt, src):
     """Slides and contact sheets: large, so they link to the full image."""
     return (f'<figure class="sheet"><div class="sheet__pan" tabindex="0" '
@@ -98,9 +110,12 @@ def sheet_figure(alt, src):
 
 def figures(lines):
     imgs = [IMG_RE.fullmatch(l.strip()).groups() for l in lines]
-    parts = [sign_figure(a, s) if is_sign(s) else sheet_figure(a, s) for a, s in imgs]
-    if len(parts) > 1 and all(is_sign(s) for _, s in imgs):
+    parts = [sign_figure(a, s) if is_sign(s) else photo_figure(a, s, t) if is_photo(s)
+             else sheet_figure(a, s) for a, s, t in imgs]
+    if len(parts) > 1 and all(is_sign(s) for _, s, _ in imgs):
         return '<div class="sign-pair">' + "".join(parts) + "</div>"
+    if len(parts) > 1 and all(is_photo(s) for _, s, _ in imgs):
+        return '<div class="photo-pair">' + "".join(parts) + "</div>"
     return "\n".join(parts)
 
 
@@ -254,7 +269,9 @@ def build():
     intro = blocks(sections[0]["lines"])
     title = next(b[1] for b in intro if b[0] == "h" and b[2] == 1)
     lede = next(b[1] for b in intro if b[0] == "p")
-    hero_alt, hero_src = next(b[2][0] for b in intro if b[0] == "fig")
+    # The hero is the first sign render in the intro (the boot animation).
+    hero_alt, hero_src, _ = next(img for b in intro if b[0] == "fig"
+                                 for img in b[2] if is_sign(img[1]))
     comments = "\n".join(b[1] for b in intro if b[0] == "comment")
 
     body, index = [], []

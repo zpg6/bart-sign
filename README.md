@@ -2,6 +2,18 @@
 
 A desk-size replica of the red LED departure signs that hang over BART platforms, with live train times.
 
+These are the signs it recreates, on a real platform:
+
+![A classic BART platform sign at 16th St Mission listing SF AIRPORT 1,13 MIN and DALY CITY 5,11 MIN, next to another showing BERRYESSA in big letters](docs/assets/reference/16th-st-mission-2021.jpg)
+
+<sub>16th St Mission, 2021. Photo: [Scott Feeney](https://commons.wikimedia.org/wiki/File:Platform_and_Arrival_Display_at_16th_St_Mission_Station,_October_2021.jpg), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), cropped.</sub>
+
+![The BART platform sign at SFO showing SAN FRANCISCO / ANTIOCH and 10-CAR, 3-DOOR above a train at the platform](docs/assets/reference/sfo-airport-2019.jpg)
+
+<sub>SFO, 2019. Photo: [Pi.1415926535](https://commons.wikimedia.org/wiki/File:New_train_at_SFIA_station,_September_2019.JPG), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).</sub>
+
+And this is the one on your desk:
+
 ![The finished sign on a desk, showing live Lafayette departures: SF AIRPORT 2,13 MIN on platform 2, Antioch and Pittsburg on platform 1](docs/assets/photos/sign-on-desk.jpg)
 
 ![Both signs booting: lamp test, then BAY AREA RAPID TRANSIT typing in on top and the station name below](docs/assets/boot.gif)
@@ -98,6 +110,8 @@ Departure data comes from BART's [real-time API](https://www.bart.gov/schedules/
 This is a fan project. It is not affiliated with, sponsored by or endorsed by the San Francisco Bay Area Rapid Transit District. "BART" and the BART logo are trademarks of the San Francisco Bay Area Rapid Transit District.
 
 The fonts were rebuilt from public station photos on Wikimedia Commons, Flickr and bart.gov. The sources are listed in [`notes/`](notes/).
+
+The two photos of real signs at the top are by Scott Feeney and Pi.1415926535 on Wikimedia Commons, under CC BY-SA 4.0 and 3.0. They keep those licenses and are not covered by this repo's MIT license; see [`docs/assets/reference/CREDITS.md`](docs/assets/reference/CREDITS.md).
 
 ## License
 
