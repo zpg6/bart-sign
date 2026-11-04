@@ -33,7 +33,7 @@ _spec.loader.exec_module(wd)
 text, rect, circle, esc, tw, chip = wd.text, wd.rect, wd.circle, wd.esc, wd.tw, wd.chip
 BLUE, INK, MUTED, FONT, CHROME = wd.BLUE, wd.INK, wd.MUTED, wd.FONT, wd.CHROME
 
-W, H = 1100, 1110
+W, H = 1310, 830
 YELLOW, YELLOW_D = "#FFD200", "#A88A00"
 ORANGE, ORANGE_D = "#F7931E", "#A65A00"
 LINES = [("#D7261E", "Red"), ("#F7931E", "Orange"), ("#FFD200", "Yellow"), ("#339933", "Green"), ("#0099CC", "Blue")]
@@ -99,45 +99,60 @@ def display_front(o, x0, y0, k):
     # a soft reflection across the glass
     o.append(f'<path d="M{gx0 + gw * 0.55:g},{gy0:g} L{gx0 + gw * 0.72:g},{gy0:g} L{gx0 + gw * 0.42:g},{gy0 + gh:g} '
              f'L{gx0 + gw * 0.25:g},{gy0 + gh:g}Z" fill="#fff" opacity="0.05"/>')
-    return w, h, n
+    # The 9-pin header sits on the left short edge, SDA-O at the top, GND at
+    # the bottom (the back view's "centre-right" header, seen from the front
+    # and turned landscape: 39-77% of the edge).
+    pins = {}
+    hx = x0 + 2.9 * k
+    for i, n_ in enumerate(wd.HEADER):
+        py = y0 + h * 0.387 + i * 2.54 * k
+        pins[n_] = (hx, py)
+        o.append(rect(hx - 3.2, py - 3.2, 6.4, 6.4, "url(#gold)", rx=1, stroke="#8a6d22", sw=0.6))
+        o.append(text(hx + 6, py + 1.8, n_, 5.2, wd.SILK, "bold", "start", ' opacity="0.9"'))
+    return w, h, n, pins
 
 
-def esp32_small(o, x0, y0, s):
-    """The wiring diagram's ESP32 drawing, scaled by `s` and turned a quarter
-    turn clockwise: antenna end to the right, USB-C to the left, the left pin
-    row along the top edge. Top-left of the turned board at x0, y0."""
+def esp32_place(x0, y0, s):
+    """Where the turned ESP32 goes: scaled by `s`, a quarter turn clockwise
+    (antenna end to the right, USB-C to the left, the left pin row along the
+    top edge), top-left of the turned board at x0, y0."""
     tx, ty = x0 + s * wd.BY1, y0 - s * wd.BX0
+    return tx, ty, s, (lambda x, y: (tx - s * y, ty + s * x))
+
+
+def esp32_draw(o, place):
+    tx, ty, s, _to = place
     o.append(f'<g transform="translate({tx:g},{ty:g}) rotate(90) scale({s:g})">')
     wd.draw_esp32(o)
     o.append("</g>")
-    return lambda x, y: (tx - s * y, ty + s * x)
 
 
-def mini_wires(o, to, dx1, dy0, dh):
-    """The eight jumpers from the turned ESP32's pins to the display's right
-    edge (the header sits behind it): left-row pins leave from the top edge,
-    right-row pins from the bottom edge."""
-    def wire(d, colour, outline):
+def mini_wires(o, pins, to, dx0, dy1, gap_x0, sp=6):
+    """The eight jumpers, as they run on the desk: out of the header on the
+    display's left edge, round its bottom-left corner, under it, up the gap
+    and under the ESP32's USB end to their pins (the male pins point down, so
+    the Dupont ends sit under the board, out of sight). Ordered so no two
+    wires cross anywhere."""
+    names = [n for n in wd.HEADER if n in wd.WIRES]      # top to bottom
+    last = len(names) - 1
+    ex0 = to(wd.BX0, wd.BY1)[0]
+    ey0 = to(wd.BX0, wd.BY1)[1]
+    for j, n in enumerate(names):
+        colour, outline = wd.WIRES[n][4], wd.WIRES[n][5]
+        px, py = pins[n]
+        cx = dx0 - 10 - (last - j) * sp          # the top pin takes the outside track
+        ly = dy1 + 10 + j * sp
+        rx = gap_x0 + (last - j) * sp
+        ty = ey0 + 8 + (last - j) * (to(wd.BX1, wd.BY0)[1] - ey0 - 16) / last
+        r = 6
+        d = (f"M{px:g},{py:g} L{cx + r:g},{py:g} Q{cx:g},{py:g} {cx:g},{py + r:g} "
+             f"L{cx:g},{ly - r:g} Q{cx:g},{ly:g} {cx + r:g},{ly:g} "
+             f"L{rx - r:g},{ly:g} Q{rx:g},{ly:g} {rx:g},{ly - r:g} "
+             f"L{rx:g},{ty + r:g} Q{rx:g},{ty:g} {rx + r:g},{ty:g} L{ex0 + 26:g},{ty:g}")
         o.append(f'<path d="{d}" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>')
         o.append(f'<path d="{d}" fill="none" stroke="{outline}" stroke-width="4.2" stroke-linecap="round"/>')
         o.append(f'<path d="{d}" fill="none" stroke="{colour}" stroke-width="2.6" stroke-linecap="round"/>')
-    ends = []
-    # Ordered so no two wires cross: the pin furthest from the display takes
-    # the outside track and the outermost entry on the display's edge.
-    groups = ((["BL", "RST", "DC"], wd.ESP_LEFT, wd.PIN_LX, -1, 0.10),
-              (["VCC", "GND", "CS", "SCL", "SDA"], wd.ESP_RIGHT, wd.PIN_RX, 1, 0.58))
-    for names, rows, pin_x, up, f0 in groups:
-        for k, n in enumerate(names):
-            row, silk, _g, _r, colour, outline = wd.WIRES[n]
-            px, py = to(pin_x, wd.pin_y(rows.index(silk)))
-            ey = dy0 + dh * (f0 + 0.075 * k)
-            lift = py + up * (16 + 6 * (len(names) - 1 - k if up < 0 else k))
-            d = (f"M{px:g},{py:g} C{px:g},{lift:g} {px - 10:g},{lift:g} {px - 24:g},{lift:g} "
-                 f"C{dx1 + 30:g},{lift:g} {dx1 + 24:g},{ey:g} {dx1 - 6:g},{ey:g}")
-            wire(d, colour, outline)
-            ends.append((px, py, colour, outline))
-    for px, py, colour, outline in ends:
-        o.append(circle(px, py, 3, colour, outline, 1))
+        o.append(circle(px, py, 2.8, colour, outline, 1))
 
 
 def router(o, cx, cy):
@@ -154,33 +169,33 @@ def router(o, cx, cy):
     o.append(circle(cx, cy - 30, 6, BLUE))
 
 
-def cloud(o, cx, cy, label):
+def cloud(o, cx, cy, label, f=1.0):
     bumps = [(-62, 8, 34), (-26, -18, 42), (22, -26, 46), (62, 0, 36), (0, 14, 40), (-40, 20, 28), (40, 20, 30)]
     for dx, dy, r in bumps:
-        o.append(circle(cx + dx, cy + dy, r + 3, "#b9c6d6"))
+        o.append(circle(cx + dx * f, cy + dy * f, r * f + 3, "#b9c6d6"))
     for dx, dy, r in bumps:
-        o.append(circle(cx + dx, cy + dy, r, "#eef3f9"))
-    o.append(text(cx, cy + 6, label, 21, INK, "bold", "middle"))
+        o.append(circle(cx + dx * f, cy + dy * f, r * f, "#eef3f9"))
+    o.append(text(cx, cy + 6, label, 19, INK, "bold", "middle"))
 
 
 def bart_card(o, x0, y0, w, h):
-    o.append(rect(x0 + 3, y0 + 6, w, h, "#000", rx=12, extra=' opacity="0.10"'))
-    o.append(rect(x0, y0, w, h, "#fff", rx=12, stroke="#cfd5db", sw=1.5))
-    o.append(f'<path d="M{x0},{y0 + 54} V{y0 + 12} Q{x0},{y0} {x0 + 12},{y0} H{x0 + w - 12} '
-             f'Q{x0 + w},{y0} {x0 + w},{y0 + 12} V{y0 + 54}Z" fill="{BLUE}"/>')
-    o.append(text(x0 + 20, y0 + 25, "BART", 15, "#cfe3f3", "bold", "start", ' letter-spacing="2"'))
-    o.append(text(x0 + 20, y0 + 45, "api.bart.gov", 18, "#fff", "bold"))
-    o.append(text(x0 + 20, y0 + 86, "Lafayette", 21, INK, "bold"))
+    o.append(rect(x0 + 3, y0 + 6, w, h, "#000", rx=11, extra=' opacity="0.10"'))
+    o.append(rect(x0, y0, w, h, "#fff", rx=11, stroke="#cfd5db", sw=1.5))
+    o.append(f'<path d="M{x0},{y0 + 46} V{y0 + 11} Q{x0},{y0} {x0 + 11},{y0} H{x0 + w - 11} '
+             f'Q{x0 + w},{y0} {x0 + w},{y0 + 11} V{y0 + 46}Z" fill="{BLUE}"/>')
+    o.append(text(x0 + 16, y0 + 20, "BART", 12.5, "#cfe3f3", "bold", "start", ' letter-spacing="2"'))
+    o.append(text(x0 + 16, y0 + 38, "api.bart.gov", 16, "#fff", "bold"))
+    o.append(text(x0 + 16, y0 + 72, "Lafayette", 18, INK, "bold"))
+    o.append(text(x0 + w - 14, y0 + 72, "min", 12, MUTED, "bold", "end"))
     rows = [("SF Airport", "4, 12"), ("SFO/Millbrae", "32, 52"), ("Pittsburg", "6, 26"), ("Antioch", "14, 34")]
     for k, (dest, mins) in enumerate(rows):
-        y = y0 + 118 + k * 30
-        o.append(circle(x0 + 28, y - 6, 7, YELLOW, YELLOW_D, 1.5))
-        o.append(text(x0 + 44, y, dest, 17, INK))
-        o.append(text(x0 + w - 18, y, mins, 17, INK, "bold", "end"))
-    o.append(text(x0 + w - 18, y0 + 86, "min", 14, MUTED, "bold", "end"))
-    y = y0 + h - 26
+        y = y0 + 98 + k * 24
+        o.append(circle(x0 + 22, y - 5, 5.5, YELLOW, YELLOW_D, 1.2))
+        o.append(text(x0 + 34, y, dest, 14.5, INK))
+        o.append(text(x0 + w - 14, y, mins, 14.5, INK, "bold", "end"))
+    y = y0 + h - 18
     for k, (c, _n) in enumerate(LINES):
-        o.append(circle(x0 + w / 2 + (k - 2) * 26, y, 8.5, c, "#00000033", 1))
+        o.append(circle(x0 + w / 2 + (k - 2) * 20, y, 6.5, c, "#00000033", 1))
 
 
 def phone(o, x0, y0):
@@ -221,15 +236,11 @@ def tag(o, x, y, label, colour, outline, size=16):
     o.append(text(x, y + size * 0.36, label, size, "#fff", "bold", "middle"))
 
 
-def caption(o, x, y, n, head, lines, anchor="start"):
-    size = 20
-    if anchor == "middle":
-        wmax = max([tw(head, 24)] + [tw(s, size, False) for s in lines]) + 40
-        x = x - wmax / 2
-    wd.badge(o, x + 13, y - 8, n)
-    o.append(text(x + 34, y, head, 24, INK, "bold"))
+def caption(o, x, y, n, head, lines):
+    wd.badge(o, x + 12, y - 7, n)
+    o.append(text(x + 31, y, head, 21, INK, "bold"))
     for k, s in enumerate(lines):
-        o.append(text(x + 34, y + 29 + k * 25, s, size, MUTED))
+        o.append(text(x + 31, y + 26 + k * 22, s, 17.5, MUTED))
 
 
 # ---------------------------------------------------------------- page
@@ -250,52 +261,68 @@ def build():
     o.append(text(34, 86, "How it works", 46, INK, "bold"))
     o.append(text(36, 118, "From BART's data to your desk", 21, MUTED))
 
-    # 1: your sign: the display's front, and the ESP32 that does the talking
-    k = 4.5
-    dx0, dy0 = 36, 164
-    dw, dh, n_lit = display_front(o, dx0, dy0, k)
-    to = esp32_small(o, dx0 + dw + 66, dy0 + dh / 2 - 60, 0.36)
-    mini_wires(o, to, dx0 + dw, dy0, dh)
+    # One row, left to right in the order the data flows: the screen, the
+    # ESP32 that does the talking, your router, the internet, BART.
+    yc = 292                                     # the row's centre line
+    k = 3.0
+    dx0 = 86
+    dw, dh = 94.84 * k, 59.19 * k
+    dy0 = yc - dh / 2
+    dw, dh, n_lit, pins = display_front(o, dx0, dy0, k)
+    s_esp = 0.26
+    ew, eh = s_esp * (wd.BY1 - wd.BY0), s_esp * (wd.BX1 - wd.BX0)
+    place = esp32_place(dx0 + dw + 54, yc - eh / 2, s_esp)
+    to = place[3]
+    mini_wires(o, pins, to, dx0, dy0 + dh, dx0 + dw + 9, sp=5)
+    esp32_draw(o, place)
     (ex0, ey0), (ex1, ey1) = to(wd.BX0, wd.BY1), to(wd.BX1, wd.BY0)   # turned: left/top, right/bottom
-    ecy = (ey0 + ey1) / 2
-    for kk, r in enumerate((12, 22)):     # Wi-Fi from the antenna end, toward the router
-        o.append(f'<path d="M{ex1 + 4 + r * 0.6:g},{ecy - r * 0.7:g} A{r},{r} 0 0 1 {ex1 + 4 + r * 0.6:g},{ecy + r * 0.7:g}" '
-                 f'fill="none" stroke="{BLUE}" stroke-width="4" stroke-linecap="round" opacity="{0.9 - kk * 0.25:g}"/>')
+    for kk, r in enumerate((10, 19)):     # Wi-Fi from the antenna end, toward the router
+        o.append(f'<path d="M{ex1 + 4 + r * 0.6:g},{yc - r * 0.7:g} A{r},{r} 0 0 1 {ex1 + 4 + r * 0.6:g},{yc + r * 0.7:g}" '
+                 f'fill="none" stroke="{BLUE}" stroke-width="3.5" stroke-linecap="round" opacity="{0.9 - kk * 0.25:g}"/>')
     # the last step: the ESP32 puts the trains on the screen
-    arrow(o, f"M{ex0 - 14:g},{ecy:g} L{dx0 + dw + 24:g},{ecy:g}", ORANGE, ORANGE_D, (dx0 + dw + 14, ecy), 180, 6)
+    ay = ey0 - 16
+    arrow(o, f"M{ex0 + 4:g},{ay:g} L{dx0 + dw + 20:g},{ay:g}", ORANGE, ORANGE_D, (dx0 + dw + 10, ay), 180, 6)
 
-    # 2: your Wi-Fi, then the internet, then BART
-    rcx, rcy = 930, 300
-    router(o, rcx, rcy)
-    ccx, ccy = 930, 704
-    cloud(o, ccx, ccy, "The internet")
-    bx0, by0, bw, bh = 380, 572, 244, 262
+    hop = 66                                      # room for each pair of arrows
+    rs = 0.72                                     # router drawing scale
+    r_l = ex1 + 28 + hop
+    rcx = r_l + 82 * rs
+    o.append(f'<g transform="translate({rcx:g},{yc:g}) scale({rs:g}) translate(0,-21)">')
+    router(o, 0, 0)
+    o.append("</g>")
+    r_r = rcx + 82 * rs
+    cf = 0.74
+    ccx = r_r + hop + 99 * cf
+    cloud(o, ccx, yc, "The internet", cf)
+    c_r = ccx + 99 * cf
+    bx0, bw, bh = c_r + hop, 196, 222
+    by0 = yc - bh / 2
     bart_card(o, bx0, by0, bw, bh)
 
-    # each hop: yellow out (the ESP32 asks), orange back (the answer)
-    ya, oa = 15, -15                      # lane offsets from each hop's centre line
-    hy = rcy - 2
-    arrow(o, f"M{ex1 + 44:g},{hy - 15:g} L{rcx - 104:g},{hy - 15:g}", YELLOW, YELLOW_D, (rcx - 96, hy - 15), 0)
-    arrow(o, f"M{rcx - 96:g},{hy + 15:g} L{ex1 + 52:g},{hy + 15:g}", ORANGE, ORANGE_D, (ex1 + 44, hy + 15), 180)
-    vx = rcx
-    arrow(o, f"M{vx + 15:g},{rcy + 62:g} L{vx + 15:g},{ccy - 84:g}", YELLOW, YELLOW_D, (vx + 15, ccy - 76), 90)
-    arrow(o, f"M{vx - 15:g},{ccy - 76:g} L{vx - 15:g},{rcy + 70:g}", ORANGE, ORANGE_D, (vx - 15, rcy + 62), -90)
-    o.append(text(vx + 42, (rcy + ccy) / 2 - 8, "your home", 16, MUTED, "bold"))
-    o.append(text(vx + 42, (rcy + ccy) / 2 + 12, "internet", 16, MUTED, "bold"))
-    gx0, gx1 = bx0 + bw + 14, ccx - 100
-    arrow(o, f"M{gx1:g},{ccy + 15:g} L{gx0 + 8:g},{ccy + 15:g}", YELLOW, YELLOW_D, (gx0, ccy + 15), 180)
-    arrow(o, f"M{gx0:g},{ccy - 15:g} L{gx1 - 8:g},{ccy - 15:g}", ORANGE, ORANGE_D, (gx1, ccy - 15), 0)
-    tag(o, (gx0 + gx1) / 2, ccy + 56, "Trains at my station?", YELLOW, YELLOW_D, 15)
-    tag(o, (gx0 + gx1) / 2, ccy - 56, "Departures, in minutes", ORANGE, ORANGE_D, 15)
+    # yellow lane above the centre line, orange lane below it, every hop
+    lanes = [(ex1 + 28, r_l), (r_r, ccx - 99 * cf), (c_r, bx0)]
+    for a_, b_ in lanes:
+        arrow(o, f"M{a_ + 6:g},{yc - 14:g} L{b_ - 16:g},{yc - 14:g}", YELLOW, YELLOW_D, (b_ - 6, yc - 14), 0, 6)
+        arrow(o, f"M{b_ - 6:g},{yc + 14:g} L{a_ + 16:g},{yc + 14:g}", ORANGE, ORANGE_D, (a_ + 6, yc + 14), 180, 6)
+    # one label per lane, over the hop to BART
+    lx = (c_r + bx0) / 2
+    for y_from, y_to, lbl, col, dk in ((yc - 22, yc - 112, "Trains at my station?", YELLOW, YELLOW_D),
+                                       (yc + 22, yc + 112, "Departures, in minutes", ORANGE, ORANGE_D)):
+        o.append(f'<line x1="{lx:g}" y1="{y_from:g}" x2="{lx:g}" y2="{y_to:g}" stroke="{dk}" stroke-width="2" stroke-dasharray="3 4"/>')
+        tag(o, lx, y_to + (-8 if y_to < yc else 8), lbl, col, dk, 15)
+    hx = (r_r + ccx - 99 * cf) / 2
+    o.append(text(hx, yc + 52, "your home", 13, MUTED, "bold", "middle"))
+    o.append(text(hx, yc + 68, "internet", 13, MUTED, "bold", "middle"))
 
-    # captions, numbered along the chain
-    caption(o, dx0, dy0 + dh + 46, 1, "Your sign", ['An ESP32 and a 3.5" screen'])
-    caption(o, rcx - 132, 150, 2, "Your Wi-Fi", ["Joins your home network", "(2.4 GHz)"])
-    caption(o, 36, by0 + 48, 3, "BART's live departures", ["Your sign asks once a", "minute, over HTTPS", "(every 5 min overnight)"])
-    caption(o, ex0 - 4, ey1 + 78, 4, "Back on your desk", ["The ESP32 draws them on", "the screen in the platform", "sign's font, counting down", "between updates"])
+    # captions on one baseline, each under its own thing: 1-2-3 out, 4 back
+    cy_ = yc + 190
+    caption(o, 30, cy_, 4, "Your sign draws it", ["The ESP32 draws them in", "the platform sign's font,", "counting down between", "updates"])
+    caption(o, ex0 - 22, cy_, 1, "Your sign asks", ['An ESP32 and a 3.5"', "screen. It asks once a", "minute, over HTTPS", "(every 5 min overnight)"])
+    caption(o, rcx - 70, cy_, 2, "Your Wi-Fi", ["Joins your home", "network (2.4 GHz)"])
+    caption(o, bx0 - 6, cy_, 3, "BART answers", ["BART's live departures", "for your station"])
 
     # first-time setup
-    py0 = 880
+    py0 = 612
     o.append(rect(36, py0, W - 72, 200, "#f3f5f7", rx=14))
     phone(o, 64, py0 + 6)
     wx, wy = 252, py0 + 92
