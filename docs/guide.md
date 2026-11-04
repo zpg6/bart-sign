@@ -6,15 +6,14 @@ This guide takes you from a bag of parts to a sign on your desk showing live BAR
 
 ## What it is
 
-If you've waited for a train at a BART station, you know the red LED signs that hang over the platform: "SF AIRPORT 4,12 MIN", then "9-CAR, 3-DOOR" underneath. When a train pulls in, the sign switches to its destination in big letters. These are the signs:
-
-![A classic BART platform sign at 16th St Mission listing SF AIRPORT 1,13 MIN and DALY CITY 5,11 MIN, next to another showing BERRYESSA in big letters](assets/reference/16th-st-mission-2021.jpg "16th St Mission, 2021. Photo: [Scott Feeney](https://commons.wikimedia.org/wiki/File:Platform_and_Arrival_Display_at_16th_St_Mission_Station,_October_2021.jpg), CC BY-SA 4.0, cropped.")
-
-![The BART platform sign at SFO showing SAN FRANCISCO / ANTIOCH and 10-CAR, 3-DOOR above a train at the platform](assets/reference/sfo-airport-2019.jpg "SFO, 2019. Photo: [Pi.1415926535](https://commons.wikimedia.org/wiki/File:New_train_at_SFIA_station,_September_2019.JPG), CC BY-SA 3.0.")
-
-This project rebuilds them at desk size:
+If you've waited for a train at a BART station, you know the red LED signs that hang over the platform: "SF AIRPORT 4,12 MIN", then "9-CAR, 3-DOOR" underneath. When a train pulls in, the sign switches to its destination in big letters. This project rebuilds them at desk size:
 
 ![The finished sign on a desk, showing live Lafayette departures: SF AIRPORT 2,13 MIN on platform 2, Antioch and Pittsburg on platform 1](assets/photos/sign-on-desk.jpg "The finished sign, showing live Lafayette departures.")
+
+It's modeled on the signs at the stations, if you haven't seen one lately:
+
+![A classic BART platform sign at 16th St Mission listing SF AIRPORT 1,13 MIN and DALY CITY 5,11 MIN, next to another showing BERRYESSA in big letters](assets/reference/16th-st-mission-2021.jpg "16th St Mission, 2021. Photo: [Scott Feeney](https://commons.wikimedia.org/wiki/File:Platform_and_Arrival_Display_at_16th_St_Mission_Station,_October_2021.jpg), CC BY-SA 4.0, cropped.")
+![The BART platform sign at SFO showing SAN FRANCISCO / ANTIOCH and 10-CAR, 3-DOOR above a train at the platform](assets/reference/sfo-airport-2019.jpg "SFO, 2019. Photo: [Pi.1415926535](https://commons.wikimedia.org/wiki/File:New_train_at_SFIA_station,_September_2019.JPG), CC BY-SA 3.0.")
 
 A small ESP32 board connects to your Wi-Fi, asks BART's public API for your station's departures once a minute, and draws them on a 3.5" screen. The screen shows two signs stacked in the gray housings Lafayette station uses, one for each platform. The LEDs are drawn dot by dot, and the fonts were measured LED by LED from station photos, so the text matches the real signs down to their quirks.
 
@@ -399,6 +398,6 @@ This is a fan project. It is not affiliated with, sponsored by or endorsed by th
 
 The fonts were rebuilt from public station photos. Photographers and sources are credited in `notes/`.
 
-The two photos of real signs at the top of this guide are by Scott Feeney (16th St Mission, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)) and Pi.1415926535 (SFO, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)), from Wikimedia Commons. They keep their own licenses, not the project's MIT license. Details are in [docs/assets/reference/CREDITS.md](https://github.com/zpg6/bart-sign/blob/main/docs/assets/reference/CREDITS.md).
+The two photos of real station signs in this guide are by Scott Feeney (16th St Mission, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)) and Pi.1415926535 (SFO, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)), from Wikimedia Commons. They keep their own licenses, not the project's MIT license. Details are in [docs/assets/reference/CREDITS.md](https://github.com/zpg6/bart-sign/blob/main/docs/assets/reference/CREDITS.md).
 
 Code: [github.com/zpg6/bart-sign](https://github.com/zpg6/bart-sign), MIT license.
