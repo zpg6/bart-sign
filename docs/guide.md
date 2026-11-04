@@ -361,6 +361,8 @@ Some ESP32 boards lack the resistors a USB-C charger looks for before it supplie
 
 ## How it works
 
+![How it works: the sign joins your home Wi-Fi, asks BART's live departures API (api.bart.gov) for your station's trains once a minute over HTTPS, and draws them in the platform sign's font. The first time, the sign makes its own Wi-Fi network, BART-SIGN-XXXX, and you pick your network, station and line on your phone.](assets/how-it-works.svg)
+
 ### Data
 
 Once a minute the ESP32 requests `https://api.bart.gov/api/etd.aspx?cmd=etd&orig=<station>&key=<key>&json=y`, BART's real-time departures. The connection uses TLS with full certificate checks: chain, signature and hostname. The sign has no clock, so certificate dates aren't checked. The trusted root certificates are in `firmware/certs/`.

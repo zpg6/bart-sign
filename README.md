@@ -79,6 +79,8 @@ To start over, hold the board's BOOT button for 5 seconds. The guide covers each
 
 ## How it works
 
+![How it works: the sign joins your home Wi-Fi, asks BART's live departures API (api.bart.gov) for your station's trains once a minute over HTTPS, and draws them in the platform sign's font. The first time, the sign makes its own Wi-Fi network, BART-SIGN-XXXX, and you pick your network, station and line on your phone.](docs/assets/how-it-works.png)
+
 - Every 60 seconds the ESP32 asks BART's real-time departures API for your station over HTTPS, with certificate checks. After the last train of the night it asks every 5 minutes instead.
 - Between fetches the minutes count down on the board itself.
 - [`sign-core`](sign-core/) turns the response into a 176 × 48 LED grid: the four-line list, the big arriving screen, platform rotation at busy stations, and "NO MORE TRAINS TONIGHT". Then it draws each LED as a dot on the 480 × 320 screen.
