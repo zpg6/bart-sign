@@ -33,7 +33,7 @@ _spec.loader.exec_module(wd)
 text, rect, circle, esc, tw, chip = wd.text, wd.rect, wd.circle, wd.esc, wd.tw, wd.chip
 BLUE, INK, MUTED, FONT, CHROME = wd.BLUE, wd.INK, wd.MUTED, wd.FONT, wd.CHROME
 
-W, H = 1100, 1010
+W, H = 1100, 1140
 YELLOW, YELLOW_D = "#FFD200", "#A88A00"
 ORANGE, ORANGE_D = "#F7931E", "#A65A00"
 LINES = [("#D7261E", "Red"), ("#F7931E", "Orange"), ("#FFD200", "Yellow"), ("#339933", "Green"), ("#0099CC", "Blue")]
@@ -85,13 +85,13 @@ def display_front(o, x0, y0, k):
     w, h = 94.84 * k, 59.19 * k
     o.append(rect(x0 + 3, y0 + 6, w, h, "#000", rx=10, extra=' opacity="0.14"'))
     o.append(rect(x0, y0, w, h, "#1f5fb0", rx=10, stroke="#14457f", sw=1.5))
-    for hx in (x0 + 4 * k, x0 + w - 4 * k):
-        for hy in (y0 + 4 * k, y0 + h - 4 * k):
-            wd.hole(o, hx, hy, 2.6 * k)
+    for hx in (x0 + 3.3 * k, x0 + w - 3.3 * k):
+        for hy in (y0 + 3.3 * k, y0 + h - 3.3 * k):
+            wd.hole(o, hx, hy, 2.1 * k)
     # glass and black surround, then the active area (73.44 x 48.96 mm)
-    gx0, gy0, gw, gh = x0 + 7 * k, y0 + 2.4 * k, 83 * k, 54.4 * k
+    gx0, gy0, gw, gh = x0 + 7.6 * k, y0 + 2.4 * k, 80.4 * k, 54.4 * k
     o.append(rect(gx0, gy0, gw, gh, "#0b0b0d", rx=3, stroke="#2a2b2f", sw=1))
-    ax0, ay0 = gx0 + 4.6 * k, gy0 + 2.7 * k
+    ax0, ay0 = gx0 + 3.4 * k, gy0 + 2.7 * k
     s = 73.44 * k / 480
     o.append(f'<g transform="translate({ax0:g},{ay0:g}) scale({s:.5f})">')
     n = sign_svg(o)
@@ -111,33 +111,32 @@ def esp32_small(o, x0, y0, s):
     return lambda x, y: (tx + s * x, ty + s * y)
 
 
-def mini_wires(o, to, dx1, dy0, dh):
-    """The eight jumpers, display edge to the right ESP32 pins: the three
-    left-row pins straight across, the five right-row pins round the USB end."""
+def mini_wires(o, to, dx0, dy0, dh):
+    """The eight jumpers from the ESP32's pins to the display's left edge
+    (behind it sits the header): the five right-row pins straight across,
+    the three left-row pins round the USB end, as in the wiring diagram."""
     def wire(d, colour, outline):
         o.append(f'<path d="{d}" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>')
         o.append(f'<path d="{d}" fill="none" stroke="{outline}" stroke-width="4.2" stroke-linecap="round"/>')
         o.append(f'<path d="{d}" fill="none" stroke="{colour}" stroke-width="2.6" stroke-linecap="round"/>')
-    left = [n for n in ("BL", "RST", "DC")]
-    right = ["SDA", "SCL", "CS", "GND", "VCC"]
     ends = []
-    for k, n in enumerate(left):
-        row, silk, _g, _r, colour, outline = wd.WIRES[n]
-        px, py = to(wd.PIN_LX, wd.pin_y(wd.ESP_LEFT.index(silk)))
-        sy = dy0 + dh * (0.30 + 0.07 * k)
-        wire(f"M{dx1 - 6:g},{sy:g} C{dx1 + 14:g},{sy:g} {px - 16:g},{py:g} {px:g},{py:g}", colour, outline)
-        ends.append((px, py, colour, outline))
-    bx1 = to(wd.BX1, 0)[0]
-    by1 = to(0, wd.BY1)[1]
-    for k, n in enumerate(right):
+    for k, n in enumerate(["SDA", "SCL", "CS", "GND", "VCC"]):
         row, silk, _g, _r, colour, outline = wd.WIRES[n]
         px, py = to(wd.PIN_RX, wd.pin_y(wd.ESP_RIGHT.index(silk)))
-        sy = dy0 + dh * (0.56 + 0.06 * k)
-        under = by1 + 22 + (4 - k) * 5        # outermost wire goes to the top pin
-        side = bx1 + 10 + (4 - k) * 5
-        d = (f"M{dx1 - 6:g},{sy:g} C{dx1 + 20:g},{sy:g} {dx1 + 10:g},{under:g} {dx1 + 40:g},{under:g} "
-             f"L{side - 12:g},{under:g} Q{side:g},{under:g} {side:g},{under - 12:g} "
-             f"L{side:g},{py + 8:g} Q{side:g},{py:g} {side - 8:g},{py:g} L{px:g},{py:g}")
+        ey = dy0 + dh * (0.24 + 0.075 * k)
+        wire(f"M{px:g},{py:g} C{px + 22:g},{py:g} {dx0 - 22:g},{ey:g} {dx0 + 6:g},{ey:g}", colour, outline)
+        ends.append((px, py, colour, outline))
+    bx0 = to(wd.BX0, 0)[0]
+    by1 = to(0, wd.BY1)[1]
+    for k, n in enumerate(["BL", "RST", "DC"]):
+        row, silk, _g, _r, colour, outline = wd.WIRES[n]
+        px, py = to(wd.PIN_LX, wd.pin_y(wd.ESP_LEFT.index(silk)))
+        side = bx0 - 10 - (2 - k) * 5        # the top pin takes the outside track
+        under = by1 + 16 + (2 - k) * 5
+        ey = dy0 + dh * (0.66 + 0.075 * k)
+        d = (f"M{px:g},{py:g} L{side + 8:g},{py:g} Q{side:g},{py:g} {side:g},{py + 8:g} "
+             f"L{side:g},{under - 10:g} Q{side:g},{under:g} {side + 10:g},{under:g} "
+             f"L{dx0 - 30:g},{under:g} C{dx0 - 10:g},{under:g} {dx0 - 18:g},{ey:g} {dx0 + 6:g},{ey:g}")
         wire(d, colour, outline)
         ends.append((px, py, colour, outline))
     for px, py, colour, outline in ends:
@@ -145,18 +144,17 @@ def mini_wires(o, to, dx1, dy0, dh):
 
 
 def router(o, cx, cy):
-    o.append(f'<line x1="{cx - 48}" y1="{cy - 4}" x2="{cx - 60}" y2="{cy - 64}" stroke="#2b2d31" stroke-width="7" stroke-linecap="round"/>')
-    o.append(f'<line x1="{cx + 48}" y1="{cy - 4}" x2="{cx + 60}" y2="{cy - 64}" stroke="#2b2d31" stroke-width="7" stroke-linecap="round"/>')
-    o.append(rect(cx - 82, cy - 6, 164, 52, "#ffffff", rx=12, stroke="#2b2d31", sw=3))
-    o.append(rect(cx - 82, cy + 28, 164, 18, "#2b2d31", rx=0, extra=f' clip-path="none"'))
-    o.append(rect(cx - 82, cy + 22, 164, 24, "#2b2d31", rx=12))
-    o.append(rect(cx - 82, cy + 22, 164, 10, "#2b2d31"))
+    for sx in (-1, 1):
+        o.append(f'<line x1="{cx + sx * 50}" y1="{cy}" x2="{cx + sx * 62}" y2="{cy - 62}" stroke="#2b2d31" '
+                 f'stroke-width="7" stroke-linecap="round"/>')
+    o.append(rect(cx - 82, cy - 6, 164, 54, "#2b2d31", rx=12))
+    o.append(rect(cx - 78, cy - 2, 156, 30, "#ffffff", rx=9))
     for k in range(4):
-        o.append(circle(cx - 48 + k * 18, cy + 11, 4, "#3fbf5a" if k < 3 else "#d8dbde"))
-    for k, r in enumerate((22, 40, 58)):
-        o.append(f'<path d="M{cx - r * 0.72:g},{cy - 22 - r * 0.7:g} A{r},{r} 0 0 1 {cx + r * 0.72:g},{cy - 22 - r * 0.7:g}" '
+        o.append(circle(cx - 42 + k * 18, cy + 13, 4, "#3fbf5a" if k < 3 else "#d8dbde"))
+    for k, r in enumerate((20, 36, 52)):
+        o.append(f'<path d="M{cx - r * 0.72:g},{cy - 26 - r * 0.7:g} A{r},{r} 0 0 1 {cx + r * 0.72:g},{cy - 26 - r * 0.7:g}" '
                  f'fill="none" stroke="{BLUE}" stroke-width="6" stroke-linecap="round" opacity="{1 - k * 0.22:g}"/>')
-    o.append(circle(cx, cy - 26, 6, BLUE))
+    o.append(circle(cx, cy - 30, 6, BLUE))
 
 
 def cloud(o, cx, cy, label):
@@ -189,22 +187,22 @@ def bart_card(o, x0, y0, w, h):
 
 
 def phone(o, x0, y0):
-    w, h = 132, 236
+    w, h = 116, 188
     o.append(rect(x0 + 2, y0 + 5, w, h, "#000", rx=20, extra=' opacity="0.14"'))
     o.append(rect(x0, y0, w, h, "#1b1c1f", rx=20))
     sx0, sy0, sw, sh = x0 + 7, y0 + 16, w - 14, h - 28
     o.append(rect(sx0, sy0, sw, sh, "#fff", rx=12))
     o.append(rect(x0 + w / 2 - 18, y0 + 6, 36, 5, "#3a3c40", rx=2.5))
-    o.append(text(sx0 + 8, sy0 + 22, "Set up your sign", 11.5, INK, "bold"))
+    o.append(text(sx0 + 7, sy0 + 17, "Set up your sign", 10.5, INK, "bold"))
     fields = [("Wi-Fi network", "Choose a network"), ("Station", "Lafayette"), ("Line", "All lines")]
     for k, (lab, val) in enumerate(fields):
-        y = sy0 + 42 + k * 42
-        o.append(text(sx0 + 8, y, lab, 9.5, MUTED, "bold"))
-        o.append(rect(sx0 + 8, y + 5, sw - 16, 20, "#f3f5f7", rx=4, stroke="#c9cfd5", sw=1))
-        o.append(text(sx0 + 14, y + 19, val, 9.5, INK))
-        o.append(f'<path d="M{sx0 + sw - 20},{y + 13} l4,4 l4,-4" fill="none" stroke="{MUTED}" stroke-width="1.4"/>')
-    o.append(rect(sx0 + 8, sy0 + sh - 38, sw - 16, 24, BLUE, rx=5))
-    o.append(text(sx0 + sw / 2, sy0 + sh - 22, "Save and connect", 9.5, "#fff", "bold", "middle"))
+        y = sy0 + 32 + k * 33
+        o.append(text(sx0 + 7, y, lab, 8.5, MUTED, "bold"))
+        o.append(rect(sx0 + 7, y + 4, sw - 14, 17, "#f3f5f7", rx=3.5, stroke="#c9cfd5", sw=1))
+        o.append(text(sx0 + 12, y + 16, val, 8.5, INK))
+        o.append(f'<path d="M{sx0 + sw - 17},{y + 10} l3.5,3.5 l3.5,-3.5" fill="none" stroke="{MUTED}" stroke-width="1.3"/>')
+    o.append(rect(sx0 + 7, sy0 + sh - 30, sw - 14, 20, BLUE, rx=4))
+    o.append(text(sx0 + sw / 2, sy0 + sh - 16.5, "Save and connect", 8.5, "#fff", "bold", "middle"))
 
 
 def arrow(o, d, colour, outline, end, angle, width=7):
@@ -227,14 +225,14 @@ def tag(o, x, y, label, colour, outline, size=16):
 
 
 def caption(o, x, y, n, head, lines, anchor="start"):
-    size = 19
+    size = 20
     if anchor == "middle":
         wmax = max([tw(head, 24)] + [tw(s, size, False) for s in lines]) + 40
         x = x - wmax / 2
     wd.badge(o, x + 13, y - 8, n)
     o.append(text(x + 34, y, head, 24, INK, "bold"))
     for k, s in enumerate(lines):
-        o.append(text(x + 34, y + 28 + k * 24, s, size, MUTED))
+        o.append(text(x + 34, y + 29 + k * 25, s, size, MUTED))
 
 
 # ---------------------------------------------------------------- page
@@ -255,68 +253,68 @@ def build():
     o.append(text(34, 86, "How it works", 46, INK, "bold"))
     o.append(text(36, 118, "From BART's data to your desk", 21, MUTED))
 
-    # 1: the sign, front of the display plus the ESP32 behind it
-    k = 4.6
-    dx0, dy0 = 36, 452
-    dw, dh, n_lit = display_front(o, dx0, dy0, k)
-    to = esp32_small(o, dx0 + dw + 30, dy0 + 12, 0.36)
-    mini_wires(o, to, dx0 + dw, dy0, dh)
+    # 1: the sign: the ESP32, wired to the display's front
+    to = esp32_small(o, 62, 548, 0.36)
     ex0, ey0 = to(wd.BX0, wd.BY0)
     ex1, ey1 = to(wd.BX1, wd.BY1)
     ecx = (ex0 + ex1) / 2
-    # Wi-Fi from the ESP32's antenna end
-    for kk, r in enumerate((14, 26)):
-        o.append(f'<path d="M{ecx - r * 0.7:g},{ey0 - 10 - r * 0.6:g} A{r},{r} 0 0 1 {ecx + r * 0.7:g},{ey0 - 10 - r * 0.6:g}" '
+    k = 4.6
+    dx0, dy0 = 236, 520
+    dw, dh, n_lit = display_front(o, dx0, dy0, k)
+    mini_wires(o, to, dx0, dy0, dh)
+    for kk, r in enumerate((14, 26)):     # Wi-Fi from the antenna end
+        o.append(f'<path d="M{ecx - r * 0.7:g},{ey0 - 8 - r * 0.6:g} A{r},{r} 0 0 1 {ecx + r * 0.7:g},{ey0 - 8 - r * 0.6:g}" '
                  f'fill="none" stroke="{BLUE}" stroke-width="4.5" stroke-linecap="round" opacity="{0.9 - kk * 0.25:g}"/>')
 
     # 2: your Wi-Fi, 3: the internet and BART
-    rcx, rcy = 300, 286
+    rcx, rcy = 140, 300
     router(o, rcx, rcy)
-    ccx, ccy = 610, 236
+    ccx, ccy = 600, 285
     cloud(o, ccx, ccy, "The internet")
-    bx0, by0, bw, bh = 820, 150, 244, 300
+    bx0, by0, bw, bh = 800, 150, 264, 262
     bart_card(o, bx0, by0, bw, bh)
 
     # yellow request out: sign -> router -> internet -> BART
-    arrow(o, f"M{ecx:g},{ey0 - 50:g} C{ecx:g},{rcy + 110:g} {rcx + 140:g},{rcy + 100:g} {rcx + 96:g},{rcy + 46:g}",
-          YELLOW, YELLOW_D, (rcx + 92, rcy + 40), 228)
-    arrow(o, f"M{rcx + 70:g},{rcy - 78:g} C{rcx + 120:g},{rcy - 130:g} {ccx - 150:g},{ccy - 40:g} {ccx - 108:g},{ccy - 16:g}",
-          YELLOW, YELLOW_D, (ccx - 102, ccy - 13), 24)
-    arrow(o, f"M{ccx + 104:g},{ccy - 22:g} C{ccx + 150:g},{ccy - 70:g} {bx0 - 60:g},{by0 + 40:g} {bx0 - 20:g},{by0 + 70:g}",
-          YELLOW, YELLOW_D, (bx0 - 14, by0 + 74), 40)
-    tag(o, (ccx + bx0) / 2 + 6, by0 - 22, "Trains at my station?", YELLOW, YELLOW_D)
+    arrow(o, f"M{ecx:g},{ey0 - 46:g} C{ecx:g},{ey0 - 90:g} {rcx:g},{rcy + 110:g} {rcx:g},{rcy + 72:g}",
+          YELLOW, YELLOW_D, (rcx, rcy + 64), -90)
+    arrow(o, f"M{rcx + 86:g},{rcy - 64:g} C{rcx + 170:g},{rcy - 150:g} {ccx - 190:g},{ccy - 100:g} {ccx - 112:g},{ccy - 34:g}",
+          YELLOW, YELLOW_D, (ccx - 106, ccy - 29), 40)
+    arrow(o, f"M{ccx + 104:g},{ccy - 40:g} C{ccx + 140:g},{ccy - 90:g} {bx0 - 50:g},{by0 + 60:g} {bx0 - 20:g},{by0 + 90:g}",
+          YELLOW, YELLOW_D, (bx0 - 14, by0 + 96), 45)
+    tag(o, (ccx + bx0) / 2 + 20, by0 - 18, "Trains at my station?", YELLOW, YELLOW_D)
 
     # orange data back: BART -> the sign
-    arrow(o, f"M{bx0 + bw / 2:g},{by0 + bh + 18:g} C{bx0 + bw / 2:g},{by0 + bh + 150:g} {ex1 + 160:g},{(ey0 + ey1) / 2:g} {ex1 + 54:g},{(ey0 + ey1) / 2 + 10:g}",
-          ORANGE, ORANGE_D, (ex1 + 46, (ey0 + ey1) / 2 + 11), 175)
-    tag(o, bx0 + bw / 2 - 4, by0 + bh + 92, "Departures, in minutes", ORANGE, ORANGE_D)
+    my = dy0 + dh * 0.42
+    arrow(o, f"M{bx0 + bw / 2:g},{by0 + bh + 20:g} C{bx0 + bw / 2:g},{my - 10:g} {dx0 + dw + 120:g},{my:g} {dx0 + dw + 40:g},{my:g}",
+          ORANGE, ORANGE_D, (dx0 + dw + 32, my), 180)
+    tag(o, bx0 + bw / 2 - 30, by0 + bh + 60, "Departures, in minutes", ORANGE, ORANGE_D)
 
     # captions
-    caption(o, 36, dy0 + dh + 50, 1, "Your sign", ['An ESP32 and a 3.5" screen'])
-    caption(o, 36, 196, 2, "Your Wi-Fi", ["Joins your home network", "(2.4 GHz)"])
-    caption(o, 470, 352, 3, "BART's live departures", ["Asks for your station's trains", "once a minute, over HTTPS", "(every 5 min overnight)"])
-    caption(o, 700, 672, 4, "On your desk", ["Draws them in the platform", "sign's own font, counting", "down between updates"])
+    caption(o, 250, 300, 2, "Your Wi-Fi", ["Joins your home", "network (2.4 GHz)"])
+    caption(o, 452, 404, 3, "BART's live departures", ["Asks for your station's trains", "once a minute, over HTTPS", "(every 5 min overnight)"])
+    caption(o, dx0 + dw + 30, my + 70, 4, "On your desk", ["Draws them in the", "platform sign's own font,", "counting down between", "updates"])
+    caption(o, 62, dy0 + dh + 56, 1, "Your sign", ['An ESP32 and a 3.5" screen'])
 
     # first-time setup
-    py0 = 790
-    o.append(rect(36, py0, W - 72, 196, "#f3f5f7", rx=14))
-    phone(o, 64, py0 - 20)
-    wx, wy = 250, py0 + 70
+    py0 = 910
+    o.append(rect(36, py0, W - 72, 200, "#f3f5f7", rx=14))
+    phone(o, 64, py0 + 6)
+    wx, wy = 252, py0 + 92
     for kk, r in enumerate((12, 24, 36)):
         o.append(f'<path d="M{wx - r * 0.72:g},{wy - r * 0.7:g} A{r},{r} 0 0 1 {wx + r * 0.72:g},{wy - r * 0.7:g}" '
                  f'fill="none" stroke="{BLUE}" stroke-width="5" stroke-linecap="round" opacity="{1 - kk * 0.2:g}"/>')
     o.append(circle(wx, wy, 5, BLUE))
-    o.append(text(wx, wy + 30, "BART-SIGN-XXXX", 13, INK, "bold", "middle"))
-    x = 330
-    o.append(text(x, py0 + 46, "First time", 24, INK, "bold"))
+    o.append(text(wx, wy + 28, "BART-SIGN-XXXX", 13, INK, "bold", "middle"))
+    x = 340
+    o.append(text(x, py0 + 48, "First time", 24, INK, "bold"))
     lines = [("The sign makes its own Wi-Fi, ", "BART-SIGN-XXXX", "."),
              ("Join it on your phone; the setup page opens, or go to ", "192.168.4.1", "."),
              ("Pick your Wi-Fi network, your station and your line.", "", "")]
     for kk, (a, b, c) in enumerate(lines):
-        y = py0 + 82 + kk * 32
-        o.append(f'<text x="{x}" y="{y}" font-size="19" fill="{INK}">{esc(a)}'
+        y = py0 + 84 + kk * 32
+        o.append(f'<text x="{x}" y="{y}" font-size="20" fill="{INK}">{esc(a)}'
                  f'<tspan font-weight="bold">{esc(b)}</tspan>{esc(c)}</text>')
-    o.append(text(x, py0 + 176, "The sign restarts, joins your network and starts showing trains.", 16, MUTED))
+    o.append(text(x, py0 + 178, "The sign restarts, joins your network and starts showing trains.", 16, MUTED))
     o.append("</svg>")
     return "\n".join(o) + "\n", n_lit
 
