@@ -1,6 +1,7 @@
-"""Draw the wiring diagram: ESP32 DevKit (top view) to the ST7796S display
-(back view), eight jumper wires. Writes docs/assets/wiring.svg, and with
---png also docs/assets/wiring.png (2x, rendered by headless Chrome).
+"""Draw the wiring diagram: the ELEGOO ESP32 DevKit (top side) and the XIITIA
+3.5" ST7796 display (back side, portrait, header at the top), joined by the
+eight jumper wires. Writes docs/assets/wiring.svg, and with --png also
+docs/assets/wiring.png (2x, rendered by headless Chrome).
 
     python3 -I tools/wiring_diagram.py [--png]
 
@@ -20,16 +21,18 @@ OUT_SVG = os.path.join(ROOT, "docs", "assets", "wiring.svg")
 OUT_PNG = os.path.join(ROOT, "docs", "assets", "wiring.png")
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
-W, H = 1200, 850
+W, H = 1200, 1040
 FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif"
 BLUE = "#0064a8"   # bart.gov blue
 INK = "#1b1b1b"
 MUTED = "#5a5a5a"
+SILK = "#f4f4f2"
 
 # ---------------------------------------------------------------- the boards
 
-# ELEGOO ESP-WROOM-32 30-pin DevKit, silk labels top (antenna) to bottom (USB-C).
-ESP_LEFT = ["EN", "VP", "VN", "D34", "D35", "D32", "D33", "D25",
+# ELEGOO ESP-WROOM-32 30-pin DevKit, silk labels top (antenna) to bottom
+# (USB-C), exactly as printed. "UP"/"UN" are VP/VN (GPIO36/39).
+ESP_LEFT = ["EN", "UP", "UN", "D34", "D35", "D32", "D33", "D25",
             "D26", "D27", "D14", "D12", "D13", "GND", "VIN"]
 ESP_RIGHT = ["D23", "D22", "TX0", "RX0", "D21", "D19", "D18", "D5",
              "TX2", "RX2", "D4", "D2", "D15", "GND", "3V3"]
@@ -52,22 +55,26 @@ LEGEND_ORDER = ["GND", "VCC", "SCL", "SDA", "RST", "DC", "CS", "BL"]
 
 # ---------------------------------------------------------------- geometry
 
-# ESP32, top view: antenna up, USB-C down.
-PITCH = 32
-PIN_Y0 = 214
-BX0, BX1, BY0, BY1 = 190, 440, 122, 722      # board outline
-PIN_LX, PIN_RX = 208, 422                     # pin columns
+# ESP32, top view: antenna up, USB-C down. 28 x 51 mm, rows 25.4 mm apart,
+# drawn at PITCH px per 2.54 mm.
+PITCH = 30
+MM = PITCH / 2.54
+CX = 357.5                                    # board centre line
+BX0, BX1, BY0, BY1 = CX - 14 * MM, CX + 14 * MM, 190, 190 + 51 * MM
+PIN_LX, PIN_RX = CX - 150, CX + 150
+PIN_Y0 = 287
 
 
 def pin_y(i):
     return PIN_Y0 + PITCH * i
 
 
-# Display, back view, header along the top edge.
-DX0, DX1, DY0, DY1 = 684, 1172, 458, 763      # 94.84 x 59.19 mm, landscape
-HDR_PITCH = 52
-HDR_Y = DY0 + 16
-HDR_X0 = (DX0 + DX1) / 2 + 6 - HDR_PITCH * 4
+# Display, back view, portrait, header at the top. 59.19 x 94.84 mm.
+DX0, DY0 = 800, 420
+DX1, DY1 = DX0 + 360, DY0 + 360 * 94.84 / 59.19
+HDR_PITCH = 24                     # drawn a little wider than 2.54 mm
+HDR_Y = DY0 + 12
+HDR_X0 = DX0 + 0.58 * 360 - HDR_PITCH * 4     # header sits centre-right
 
 
 def hdr_x(name):
@@ -80,11 +87,11 @@ def hdr_x(name):
 # board and climbs the far side. Lane order is the reverse of header order,
 # so the header end stays crossing-free; the crossings all land in the
 # channel, where each one is a clean right angle.
-LANE_TOP, LANE_STEP = 330, 14
+LANE_TOP, LANE_STEP = 296, 14
 LANE_ORDER = ["GND", "VCC", "SCL", "SDA", "RST", "DC", "CS", "BL"]   # top to bottom
-COL_X0, COL_STEP = 568, 14
+COL_X0, COL_STEP = 655, 14
 COL_ORDER = ["SCL", "GND", "VCC", "CS", "SDA", "DC", "RST", "BL"]    # board side outward
-UNDER = {"DC": (758, 62), "RST": (772, 48), "BL": (786, 34)}         # lane y, left column x
+UNDER = {"DC": (824, 62), "RST": (838, 48), "BL": (852, 34)}         # lane y, left column x
 RADIUS = 7
 
 
@@ -157,13 +164,23 @@ def esc(s):
 
 def text(x, y, s, size, fill=INK, weight="normal", anchor="start", extra=""):
     w = ' font-weight="bold"' if weight == "bold" else ""
-    return (f'<text x="{x:g}" y="{y:g}" font-size="{size}"{w} fill="{fill}" '
+    return (f'<text x="{x:g}" y="{y:g}" font-size="{size:g}"{w} fill="{fill}" '
             f'text-anchor="{anchor}"{extra}>{esc(s)}</text>')
+
+
+def rtext(x, y, s, size, angle, fill=SILK, weight="bold", anchor="middle", extra=""):
+    """Rotated text: -90 reads bottom to top, 90 reads top to bottom."""
+    return text(x, y, s, size, fill, weight, anchor, f' transform="rotate({angle} {x:g} {y:g})"' + extra)
 
 
 def rect(x, y, w, h, fill, rx=0, stroke=None, sw=1, extra=""):
     s = f' stroke="{stroke}" stroke-width="{sw}"' if stroke else ""
     return f'<rect x="{x:g}" y="{y:g}" width="{w:g}" height="{h:g}" rx="{rx:g}" fill="{fill}"{s}{extra}/>'
+
+
+def circle(x, y, r, fill, stroke=None, sw=1, extra=""):
+    s = f' stroke="{stroke}" stroke-width="{sw}"' if stroke else ""
+    return f'<circle cx="{x:g}" cy="{y:g}" r="{r:g}" fill="{fill}"{s}{extra}/>'
 
 
 # Text widths for sizing chips and callouts: measured with Helvetica Neue when
@@ -186,146 +203,317 @@ def tw(s, size, bold=True):
     return sum(_ADV.get(c, 0.56) for c in s) * size * 1.08
 
 
-def chip(cx, cy, label, size, dim=False, minw=0):
+def chip(cx, cy, label, size, minw=0, dim=False):
     """A station-sign label: black plate, white Helvetica Bold."""
     w = max(minw, tw(label, size) + size * 0.75)
     h = size * 1.42
-    fill, ink = ("#eceef0", "#a3a8ad") if dim else ("#000", "#fff")
+    fill, ink = ("#e7e9eb", "#7f868c") if dim else ("#000", "#fff")
     return (rect(cx - w / 2, cy - h / 2, w, h, fill, rx=3)
-            + text(cx, cy + size * 0.36, label, size, ink, "bold", "middle"))
+            + text(cx, cy + size * 0.36, label, size, ink, "bold", "middle")), w, h
 
 
-# ---------------------------------------------------------------- drawing
+def badge(o, x, y, n):
+    o.append(circle(x, y, 11.5, BLUE, "#fff", 2))
+    o.append(text(x, y + 4.8, str(n), 14, "#fff", "bold", "middle"))
+
+
+def hole(o, x, y, r=9.5):
+    """Plated mounting hole: a bright ring, the page showing through."""
+    o.append(circle(x, y, r, "#e2e4e6", "#9aa0a6", 1))
+    o.append(circle(x, y, r * 0.55, "#ffffff", "#b9bec3", 0.8))
+
+
+# ---------------------------------------------------------------- ESP32
 
 def draw_esp32(o):
     o.append('<g id="esp32">')
-    # PCB
-    o.append(rect(BX0 + 2, BY0 + 4, BX1 - BX0, BY1 - BY0, "#000", rx=12, extra=' opacity="0.12"'))
-    o.append(rect(BX0, BY0, BX1 - BX0, BY1 - BY0, "#1c1e21", rx=12, stroke="#000", sw=1.5))
-    # ESP-WROOM-32 module: its own PCB with the antenna meander, then the can.
-    mx0, mx1, my0, my1 = 236, 394, 128, 376
-    o.append(rect(mx0, my0, mx1 - mx0, my1 - my0, "#111316", rx=3, stroke="#2c2f33"))
-    ant = "M248,176 V140 H262 V170 H276 V140 H290 V170 H304 V140 H318 V170 H332 V140 H346 V170 H360 V140 H374 V176"
-    o.append(f'<path d="{ant}" fill="none" stroke="#b8963e" stroke-width="3" stroke-linejoin="round" opacity="0.85"/>')
-    o.append('<defs><linearGradient id="can" x1="0" y1="0" x2="1" y2="1">'
-             '<stop offset="0" stop-color="#e4e6e9"/><stop offset="1" stop-color="#b4b8be"/></linearGradient></defs>')
-    o.append(rect(244, 190, 142, 178, "url(#can)", rx=3, stroke="#8f949a"))
-    o.append(text(315, 262, "ESP-WROOM-32", 13, "#7d8288", "bold", "middle", ' letter-spacing="0.5"'))
-    o.append(text(315, 282, "ESPRESSIF", 10, "#959aa0", "bold", "middle", ' letter-spacing="1.5"'))
-    # castellated module pads along the can
-    for i in range(10):
-        y = 200 + i * 17
-        o.append(rect(mx0 + 1, y, 5, 8, "#b8963e", extra=' opacity="0.7"'))
-        o.append(rect(mx1 - 6, y, 5, 8, "#b8963e", extra=' opacity="0.7"'))
-    # AMS1117 regulator and CP2102 USB-UART, drawn quietly
-    o.append(rect(246, 452, 34, 26, "#0b0c0d", rx=2, stroke="#34373b"))
-    o.append(rect(253, 446, 20, 6, "#9a9ea4"))
-    o.append(rect(292, 560, 46, 46, "#0b0c0d", rx=3, stroke="#34373b"))
-    o.append('<circle cx="299" cy="567" r="2.2" fill="#3a3d41"/>')
-    # USB-C, buttons, power LED
-    o.append(rect(285, 700, 60, 30, "#c3c7cc", rx=11, stroke="#7e848a", sw=1.5))
-    o.append(rect(295, 711, 40, 8, "#3a3d41", rx=4))
-    for bx, label in ((226, "EN"), (374, "BOOT")):
-        o.append(rect(bx, 684, 30, 26, "#d9dcdf", rx=3, stroke="#8f949a"))
-        o.append(f'<circle cx="{bx + 15}" cy="697" r="8" fill="#2a2c2f"/>')
-        o.append(text(bx + 15, 676, label, 10, "#c9ccd0", "bold", "middle"))
-    o.append(rect(268, 690, 9, 6, "#e0322a", rx=1.5))
-    o.append(f'<circle cx="272.5" cy="693" r="7" fill="#ff3b24" opacity="0.25"/>')
-    # header pins
-    used = {(WIRES[n][0], WIRES[n][1]) for n in WIRES}
+    o.append('<defs>'
+             '<linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">'
+             '<stop offset="0" stop-color="#eef0f2"/><stop offset="0.55" stop-color="#c3c7cc"/>'
+             '<stop offset="1" stop-color="#9aa0a7"/></linearGradient>'
+             '<linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">'
+             '<stop offset="0" stop-color="#f0d27a"/><stop offset="1" stop-color="#b8902e"/></linearGradient>'
+             '</defs>')
+    # PCB with four plated holes
+    o.append(rect(BX0 + 2, BY0 + 5, BX1 - BX0, BY1 - BY0, "#000", rx=16, extra=' opacity="0.13"'))
+    o.append(rect(BX0, BY0, BX1 - BX0, BY1 - BY0, "#141518", rx=16, stroke="#000", sw=1.5))
+    for hx in (BX0 + 18, BX1 - 18):
+        for hy in (BY0 + 20, BY1 - 20):
+            hole(o, hx, hy)
+
+    # ESP-WROOM-32: antenna PCB at the very top, then the black shield
+    mx0, mx1, my0, my1 = CX - 106, CX + 106, BY0, BY0 + 301
+    o.append(rect(mx0, my0, mx1 - mx0, my1 - my0, "#0d0e10", rx=3, stroke="#2a2d31"))
+    ant = [f"M{mx0 + 22},{my0 + 66} V{my0 + 14}"]
+    x = mx0 + 22
+    for k in range(8):
+        x += 21
+        ant.append(f"H{x} V{my0 + (52 if k % 2 == 0 else 14)}")
+    ant.append(f"H{x + 21} V{my0 + 66}")
+    o.append(f'<path d="{" ".join(ant)}" fill="none" stroke="#3e4248" stroke-width="3" stroke-linejoin="round"/>')
+    sx0, sx1, sy0, sy1 = CX - 98, CX + 98, my0 + 80, my1 - 9
+    o.append(rect(sx0, sy0, sx1 - sx0, sy1 - sy0, "#1d1f23", rx=4, stroke="#3d4046", sw=1.5))
+    o.append(rect(sx0 + 3, sy0 + 3, sx1 - sx0 - 6, sy1 - sy0 - 6, "none", rx=3, stroke="#2b2e33", sw=1))
+    # printing on the shield
+    o.append(rect(CX - 25, sy0 + 18, 50, 22, "none", rx=11, stroke=SILK, sw=1.6))
+    o.append(text(CX, sy0 + 34, "Wi-Fi", 12, SILK, "bold", "middle", ' font-style="italic"'))
+    o.append(text(CX, sy0 + 72, "ESP-WROOM-32", 19, SILK, "bold", "middle"))
+    o.append(text(CX - 58, sy0 + 108, "CE", 20, SILK, "normal", "middle", ' letter-spacing="-1"'))
+    o.append(circle(CX - 18, sy0 + 102, 8, "none", SILK, 1.4))
+    o.append(text(CX - 18, sy0 + 106, "R", 10, SILK, "bold", "middle"))
+    o.append(text(CX - 6, sy0 + 107, "211-161007", 12, SILK, "normal", "start"))
+    o.append(text(CX, sy0 + 146, "FC", 22, SILK, "bold", "middle", ' font-style="italic" letter-spacing="-1"'))
+    o.append(text(CX, sy0 + 178, "FCC ID:2AC7Z-ESP32WROOM32", 10.5, SILK, "normal", "middle"))
+    # castellated pads along the module's bottom edge
+    for k in range(10):
+        px = CX - 90 + k * 20
+        o.append(rect(px - 5, my1 - 7, 10, 10, "url(#gold)", rx=1.5))
+
+    # small parts below the module
+    def res(x, y, label, w=18, h=9):
+        o.append(rect(x - w / 2, y - h / 2, w, h, "#0b0b0c", rx=1, stroke="#3a3c40", sw=0.8))
+        o.append(rect(x - w / 2, y - h / 2, 3, h, "#b9bdc2"))
+        o.append(rect(x + w / 2 - 3, y - h / 2, 3, h, "#b9bdc2"))
+        o.append(text(x, y + 2.6, label, 6.5, "#c9ccd0", "bold", "middle"))
+    t0 = my1 + 22
+    o.append(rect(CX - 98, t0 - 2, 40, 22, "#e6a21a", rx=2, stroke="#9a6a07"))     # tantalum
+    o.append(rect(CX - 98, t0 - 2, 8, 22, "#b77908", rx=1))
+    o.append(text(CX - 74, t0 + 13, "106C", 9, "#5b3a00", "bold", "middle"))
+    for (rx_, ry_, lab) in ((CX - 36, t0 + 4, "103"), (CX - 10, t0 + 4, "102"), (CX + 34, t0 + 4, "103"),
+                            (CX + 70, t0 + 4, "103"), (CX + 86, t0 + 92, "102"), (CX - 6, t0 + 124, "103")):
+        res(rx_, ry_, lab)
+    # AMS1117 (SOT-223) and a small silver part to its left
+    rg0 = t0 + 44
+    o.append(rect(CX - 72, rg0 - 10, 38, 11, "#aeb3b9", rx=1))
+    o.append(rect(CX - 80, rg0, 54, 32, "#0e0f11", rx=2, stroke="#3a3d42"))
+    for k in range(3):
+        o.append(rect(CX - 74 + k * 18, rg0 + 32, 6, 8, "#aeb3b9"))
+    o.append(text(CX - 53, rg0 + 19, "AMS1117", 7, "#6f747a", "bold", "middle"))
+    o.append(rect(CX - 104, rg0 + 6, 16, 22, "url(#metal)", rx=2, stroke="#7d838a", sw=0.8))
+    # CP2102 (U2), a QFN
+    q0 = t0 + 40
+    o.append(rect(CX + 20, q0, 46, 46, "#0f1012", rx=2, stroke="#3a3d42"))
+    for k in range(6):
+        for (qx, qy, qw, qh) in ((CX + 26 + k * 6.5, q0 - 2, 3, 3), (CX + 26 + k * 6.5, q0 + 45, 3, 3),
+                                 (CX + 18, q0 + 6 + k * 6.5, 3, 3), (CX + 65, q0 + 6 + k * 6.5, 3, 3)):
+            o.append(rect(qx, qy, qw, qh, "#9ca1a7"))
+    o.append(circle(CX + 27, q0 + 7, 2.2, "#34373b"))
+    o.append(text(CX + 43, q0 + 64, "U2", 10, SILK, "bold", "middle"))
+    # two tiny LEDs, the power LED lit
+    o.append(circle(CX - 34, BY1 - 92, 9, "#ff3b24", extra=' opacity="0.28"'))
+    o.append(rect(CX - 39, BY1 - 95, 10, 6, "#ff4a32", rx=1))
+    o.append(rect(CX + 28, BY1 - 95, 10, 6, "#e9e3cf", rx=1, stroke="#9a9580", sw=0.6))
+
+    # USB-C receptacle: metal shell, centred, sticking out past the edge
+    ux0, ux1 = CX - 53, CX + 53
+    o.append(rect(ux0, BY1 - 70, ux1 - ux0, 84, "url(#metal)", rx=7, stroke="#737a82", sw=1.5))
+    o.append(rect(ux0 + 8, BY1 - 62, ux1 - ux0 - 16, 66, "none", rx=5, stroke="#8a9097", sw=1))
+    o.append(f'<line x1="{ux0 + 1}" y1="{BY1}" x2="{ux1 - 1}" y2="{BY1}" stroke="#6c737a" stroke-width="1"/>')
+    # EN and BOOT buttons
+    for bx, label in ((CX - 95, "EN"), (CX + 95, "BOOT.")):
+        o.append(rect(bx - 23, BY1 - 64, 46, 46, "#18191b", rx=3, stroke="#4b4e53", sw=1.2))
+        for cx_, cy_ in ((bx - 19, BY1 - 60), (bx + 19, BY1 - 60), (bx - 19, BY1 - 22), (bx + 19, BY1 - 22)):
+            o.append(circle(cx_, cy_, 2, "#8d9298"))
+        o.append(circle(bx, BY1 - 41, 13, "#2a2c30", "#4d5056", 1.2))
+        o.append(circle(bx - 3, BY1 - 44, 5, "#3a3d42"))
+        o.append(text(bx, BY1 - 70, label, 11, SILK, "bold", "middle"))
+
+    # header pins: gold rings, dark centres; silk labels rotated, just inside
     for row, labels, px in (("L", ESP_LEFT, PIN_LX), ("R", ESP_RIGHT, PIN_RX)):
         for i, lab in enumerate(labels):
             y = pin_y(i)
-            on = (row, lab) in used
-            o.append(rect(px - 8, y - 8, 16, 16, "#d6b250" if on else "#8a7a4c", rx=2))
-            o.append(f'<circle cx="{px}" cy="{y}" r="3.6" fill="#1c1e21"/>')
+            o.append(circle(px, y, 9.5, "url(#gold)", "#8a6d22", 1))
+            o.append(circle(px, y, 4.4, "#101010"))
+            tx = px + 27 if row == "L" else px - 17
+            o.append(rtext(tx, y, lab, 13, -90))
     o.append("</g>")
 
 
-def draw_esp_labels(o):
-    """Pin chips just outside the board; GPIO numbers for the used pins."""
-    used = {(WIRES[n][0], WIRES[n][1]): n for n in WIRES}
+def draw_esp_tags(o):
+    """Tags on the used pins only: label plate plus the GPIO number."""
     size, cw, gw = 16, 50, 62
-    for row, labels in (("L", ESP_LEFT), ("R", ESP_RIGHT)):
-        for i, lab in enumerate(labels):
-            y = pin_y(i)
-            name = used.get((row, lab))
-            cx = BX0 - 6 - cw / 2 if row == "L" else BX1 + 6 + cw / 2
-            if name is None:
-                o.append(chip(cx, y, lab, size, dim=True, minw=cw))
-                continue
-            gpio, colour, outline = WIRES[name][2], WIRES[name][4], WIRES[name][5]
-            # GPIO plate on the outer side, coloured edge where the wire comes in
-            gx = cx - cw / 2 - gw if row == "L" else cx + cw / 2
-            h = size * 1.42
-            o.append(rect(gx, y - h / 2, gw, h, "#fff", rx=3, stroke="#000", sw=1.5))
-            edge = gx if row == "L" else gx + gw - 6
-            o.append(rect(edge, y - h / 2, 6, h, colour, extra=f' stroke="{outline}" stroke-width="1"'))
-            g = f"GPIO{gpio}" if gpio is not None else ("power" if lab == "3V3" else "ground")
-            o.append(text(gx + gw / 2 + (3 if row == "L" else -3), y + 5, g, 13.5, INK, "bold", "middle"))
-            o.append(chip(cx, y, lab, size, minw=cw))
+    for n, (row, silk, gpio, role, colour, outline) in WIRES.items():
+        rows = ESP_RIGHT if row == "R" else ESP_LEFT
+        y = pin_y(rows.index(silk))
+        cx = BX0 - 6 - cw / 2 if row == "L" else BX1 + 6 + cw / 2
+        gx = cx - cw / 2 - gw if row == "L" else cx + cw / 2
+        h = size * 1.42
+        o.append(rect(gx, y - h / 2, gw, h, "#fff", rx=3, stroke="#000", sw=1.5))
+        edge = gx if row == "L" else gx + gw - 6
+        o.append(rect(edge, y - h / 2, 6, h, colour, extra=f' stroke="{outline}" stroke-width="1"'))
+        g = f"GPIO{gpio}" if gpio is not None else ("power" if silk == "3V3" else "ground")
+        o.append(text(gx + gw / 2 + (3 if row == "L" else -3), y + 5, g, 13.5, INK, "bold", "middle"))
+        o.append(chip(cx, y, silk, size, minw=cw)[0])
+
+
+# ---------------------------------------------------------------- display
+
+FPC16 = ["BL"] + [f"D{k}" for k in range(15, -1, -1)] + ["RST", "RD", "WR", "DC", "CS", "VCC", "GND"]
+FPC8 = ["BL"] + [f"D{k}" for k in range(7, -1, -1)] + ["RST", "RD", "WR", "DC", "CS", "VCC", "GND"]
+
+
+def fpc(o, x0, y0, w, h, labels, label_y, label_dir):
+    """White FPC socket with a row of tiny rotated pin labels."""
+    o.append(rect(x0, y0, w, h, "#f5f2ea", rx=2, stroke="#c9c2ae", sw=1))
+    o.append(rect(x0 + 5, y0 + h * 0.36, w - 10, h * 0.3, "#d8b866"))
+    step = (w - 10) / (len(labels) - 1)
+    for k, lab in enumerate(labels):
+        x = x0 + 5 + k * step
+        anchor = "start" if label_dir > 0 else "end"
+        o.append(rtext(x - 2, label_y, lab, 5.6, 90, SILK, "bold", anchor, ' opacity="0.8"'))
 
 
 def draw_display(o):
     o.append('<g id="display">')
-    o.append(rect(DX0 + 2, DY0 + 5, DX1 - DX0, DY1 - DY0, "#000", rx=10, extra=' opacity="0.12"'))
-    o.append(rect(DX0, DY0, DX1 - DX0, DY1 - DY0, "#1f5ca8", rx=10, stroke="#123c70", sw=1.5))
-    faint = ' opacity="0.42"'
-    # silk and parts on the back, faded: they help you recognise the board
-    o.append(f'<g{faint}>')
-    o.append(text(DX0 + 22, DY1 - 24, '3.5"TFT', 26, "#fff", "bold"))
-    # 8080 FPC sockets
-    o.append(rect(DX0 + 24, DY1 - 118, 170, 22, "#f3efe2", rx=2))
-    o.append(rect(DX0 + 30, DY1 - 112, 158, 6, "#c9a85a"))
-    o.append(text(DX0 + 24, DY1 - 124, "8080-16P", 13, "#fff", "bold"))
-    o.append(rect(DX0 + 196, DY1 - 118, 78, 22, "#f3efe2", rx=2))
-    o.append(rect(DX0 + 202, DY1 - 112, 66, 6, "#c9a85a"))
-    o.append(text(DX0 + 196, DY1 - 124, "8080-8P", 13, "#fff", "bold"))
-    o.append("</g>")
-    # IM0-IM2 jumper table (SPI row is the one that matters)
-    tx, ty = DX1 - 182, DY1 - 146
-    cols = ["", "IM0", "IM1", "IM2"]
-    rows = [("P8", "1", "1", "0"), ("P16", "0", "1", "0"), ("SPI", "1", "1", "1"), ("SPI3", "1", "0", "1")]
-    cw, rh = 40, 22
-    o.append(rect(tx - 6, ty - 18, cw * 4 + 12, rh * 5 + 6, "none", rx=3, stroke="#fff", sw=1, extra=' opacity="0.5"'))
-    for j, c in enumerate(cols):
-        o.append(text(tx + cw * j + cw / 2, ty, c, 12, "#fff", "bold", "middle", ' opacity="0.55"'))
-    for i, r in enumerate(rows):
-        y = ty + rh * (i + 1)
-        hi = r[0] == "SPI"
-        if hi:
-            o.append(rect(tx - 4, y - 15, cw * 4 + 8, rh - 1, "#fff", rx=3))
-        for j, v in enumerate(r):
-            o.append(text(tx + cw * j + cw / 2, y, v, 13 if hi else 12, "#123c70" if hi else "#fff",
-                          "bold", "middle", "" if hi else ' opacity="0.5"'))
-    # header: black plastic strip, gold pins
-    x0, x1 = hdr_x("SDA-O") - HDR_PITCH / 2 + 4, hdr_x("GND") + HDR_PITCH / 2 - 4
-    o.append(rect(x0, HDR_Y - 11, x1 - x0, 22, "#141414", rx=2))
+    o.append('<defs><linearGradient id="kapton" x1="0" y1="0" x2="0" y2="1">'
+             '<stop offset="0" stop-color="#d79a2c"/><stop offset="1" stop-color="#b9761a"/></linearGradient></defs>')
+    w = DX1 - DX0
+    o.append(rect(DX0 + 2, DY0 + 6, w, DY1 - DY0, "#000", rx=12, extra=' opacity="0.13"'))
+    o.append(rect(DX0, DY0, w, DY1 - DY0, "#1f5fb0", rx=12, stroke="#14457f", sw=1.5))
+
+    # thin traces fanning from the bottom connector up to the top one, in
+    # two bundles that skirt the jumper table and the regulator parts
+    tr = []
+    for k in range(7):
+        xb = DX0 + 150 + k * 6          # 8080-8P end
+        xm = DX0 + 244 + k * 3.2        # gap between the table and U8/U7
+        xt = DX0 + 150 + k * 9          # 8080-16P end
+        tr.append(f"M{xb:g},{DY0 + 452:g} V{DY0 + 440 - k * 3:g} L{xm:g},{DY0 + 410 - k * 3:g} "
+                  f"V{DY0 + 300 + k * 3:g} L{xt:g},{DY0 + 232 + k * 3:g} V{DY0 + 200:g}")
+    for k in range(5):
+        xb = DX0 + 222 + k * 5
+        xm = DX0 + 338 + k * 3.2
+        xt = DX0 + 214 + k * 6
+        tr.append(f"M{xb:g},{DY0 + 452:g} V{DY0 + 444 - k * 3:g} L{xm:g},{DY0 + 432 - k * 3:g} "
+                  f"V{DY0 + 252 - k * 3:g} L{xt:g},{DY0 + 214:g} V{DY0 + 200:g}")
+    o.append(f'<path d="{" ".join(tr)}" fill="none" stroke="#174c90" stroke-width="1.5" opacity="0.85"/>')
+
+    for hx in (DX0 + 16, DX1 - 16):
+        for hy in (DY0 + 16, DY1 - 16):
+            hole(o, hx, hy, 8.5)
+
+    # frame tabs at about 25% and 73% of the height; "ST779.." peeks out
+    # from under the top right one
+    o.append(text(DX1 - 14, DY0 + (DY1 - DY0) * 0.25 + 4, "ST7796", 11, SILK, "bold", "end", ' opacity="0.85"'))
+    for f in (0.25, 0.73):
+        ty = DY0 + (DY1 - DY0) * f
+        o.append(rect(DX0 - 3, ty - 13, 12, 26, "#0f0f10", rx=1.5))
+        o.append(rect(DX1 - (30 if f == 0.25 else 9), ty - 13, 33 if f == 0.25 else 12, 26, "#0f0f10", rx=1.5))
+
+    # 8080-16P socket, about 60% of the width, label on its right
+    fpc(o, DX0 + 30, DY0 + 176, 216, 16, FPC16, DY0 + 196, 1)
+    o.append(text(DX0 + 254, DY0 + 189, "8080-16P", 12, SILK, "bold"))
+
+    # 3.5"TFT
+    o.append(text(DX0 + 180, DY0 + 276, '3.5"TFT', 44, SILK, "bold", "middle"))
+
+    # IM jumper table, left-middle. The SPI column (1,1,1) is the setting.
+    x0, y0 = DX0 + 14, DY0 + 324
+    cols = ["P8", "P16", "SPI", "SPI3"]
+    vals = {"IM0": "1011", "IM1": "1110", "IM2": "0011"}
+    cw, rh, gx = 33, 22, x0 + 92
+    for k in (1, 2, 3):
+        o.append(rect(gx + cw * k + cw / 2 - 4, y0 - 26, 8, 8, SILK))
+    spi = gx + cw * 2
+    o.append(rect(spi + 1, y0 - 15, cw - 2, rh * 4 - 1, "#fff", rx=2))
+    o.append(text(x0 + 33, y0, "0", 9, SILK, "bold", "middle"))
+    o.append(text(x0 + 47, y0, "1", 9, SILK, "bold", "middle"))
+    for k, c in enumerate(cols):
+        o.append(text(gx + cw * k + cw / 2, y0, c, 11, BLUE if c == "SPI" else SILK, "bold", "middle"))
+    for r, (im, v) in enumerate(vals.items()):
+        y = y0 + rh * (r + 1)
+        o.append(rect(x0 - 4, y - 9, 20, 9, "#0b0b0c", rx=1))
+        o.append(text(x0 + 6, y - 2.2, "103", 5.6, "#c9ccd0", "bold", "middle"))
+        o.append(rect(x0 + 29, y - 10, 8, 9, "#d8b866", rx=1))
+        o.append(rect(x0 + 43, y - 10, 8, 9, "#d8b866", rx=1))
+        o.append(text(x0 + 72, y, im, 11, SILK, "bold", "middle"))
+        for k, ch in enumerate(v):
+            hi = cols[k] == "SPI"
+            o.append(text(gx + cw * k + cw / 2, y, ch, 12 if hi else 11, BLUE if hi else SILK, "bold", "middle"))
+    grid = []
+    for k in range(5):
+        grid.append(f"M{gx + cw * k:g},{y0 - 15:g} V{y0 + rh * 3 + 6:g}")
+    for r in range(4):
+        grid.append(f"M{x0 + 56:g},{y0 + 6 + rh * r:g} H{gx + cw * 4:g}")
+    o.append(f'<path d="{" ".join(grid)}" fill="none" stroke="{SILK}" stroke-width="1" opacity="0.7"/>')
+
+    # right-middle: U8 (SOT-23-3) and U7 (SOT-23) with their passives
+    def sot(x, y, name):
+        o.append(rect(x - 11, y - 7, 22, 14, "#0e0f11", rx=1.5, stroke="#3a3d42", sw=0.8))
+        for lx in (x - 7, x + 7):
+            o.append(rect(lx - 2, y + 7, 4, 4, "#aeb3b9"))
+        o.append(rect(x - 2, y - 11, 4, 4, "#aeb3b9"))
+        o.append(text(x, y + 24, name, 8, SILK, "bold", "middle"))
+
+    def part(x, y, name, res=False, label_dy=-7):
+        o.append(rect(x - 6, y - 3, 12, 6, "#0b0b0c" if res else "#c8a27a", rx=1, stroke="#3d3a33", sw=0.6))
+        o.append(text(x, y + label_dy, name, 6.5, SILK, "bold", "middle"))
+    ux, uy = DX0 + 300, DY0 + 336
+    sot(ux, uy, "U8")
+    part(ux - 30, uy - 6, "C17")
+    part(ux - 30, uy + 10, "C18", label_dy=13)
+    part(ux + 30, uy - 6, "C19")
+    part(ux + 30, uy + 10, "C20", label_dy=13)
+    vx, vy = DX0 + 300, DY0 + 400
+    sot(vx, vy, "U7")
+    part(vx - 30, vy - 6, "C16")
+    part(vx + 30, vy - 6, "R41", res=True)
+    part(vx + 30, vy + 10, "R40", res=True, label_dy=13)
+    part(vx - 30, vy + 10, "R39", res=True, label_dy=13)
+    part(vx, vy - 22, "R18", res=True)
+
+    # bottom: 8080-8P socket (labels above), then the glass's flex in a ZIF
+    fpc(o, DX0 + 112, DY0 + 468, 140, 15, FPC8, DY0 + 462, -1)
+    o.append(text(DX0 + 258, DY0 + 480, "8080-8P", 12, SILK, "bold"))
+    zx0, zx1, zy = DX0 + 86, DX0 + 274, DY0 + 506
+    o.append(rect(zx0 + 12, zy + 14, zx1 - zx0 - 24, DY1 - zy - 14, "url(#kapton)", stroke="#8e5a12", sw=1))
+    for k in range(20):
+        lx = zx0 + 20 + k * (zx1 - zx0 - 40) / 19
+        o.append(f'<line x1="{lx:g}" y1="{zy + 16}" x2="{lx:g}" y2="{DY1 - 1:g}" stroke="#a8691a" stroke-width="1" opacity="0.6"/>')
+    o.append(text(zx0 + 20, zy + 46, "40", 10, "#5e3906", "bold", "start"))
+    o.append(text(zx1 - 20, zy + 46, "1", 10, "#5e3906", "bold", "end"))
+    o.append(rect(zx0, zy, zx1 - zx0, 10, "#111", rx=1.5))
+    o.append(rect(zx0 + 2, zy + 10, zx1 - zx0 - 4, 6, "#f2f0ea", rx=1))
+
+    # 9-pin header: black strip, gold pins, "9" and "SPI" at the ends
+    hx0, hx1 = hdr_x("SDA-O") - 14, hdr_x("GND") + 14
+    o.append(rect(hx0, DY0 + 2, hx1 - hx0, 20, "#121212", rx=2))
     for n in HEADER:
         x = hdr_x(n)
-        o.append(rect(x - 6, HDR_Y - 6, 12, 12, "#e2bf5c" if n in WIRES else "#9c8650", rx=1.5))
-    o.append(text(x0 + 6, HDR_Y + 4, "9", 11, "#9a9a9a", "bold", "middle"))
-    o.append(text(x1 - 6, HDR_Y + 4, "1", 11, "#9a9a9a", "bold", "middle"))
-    # pin chips, staggered in two rows so the labels can be big
-    size = 18
-    for i, n in enumerate(HEADER):
-        x = hdr_x(n)
-        cy = HDR_Y + 32 if i % 2 == 0 else HDR_Y + 66
-        o.append(f'<line x1="{x:g}" y1="{HDR_Y + 7}" x2="{x:g}" y2="{cy - 10:g}" stroke="#fff" stroke-width="1.5" opacity="0.7"/>')
-        if n in WIRES:
-            colour, outline = WIRES[n][4], WIRES[n][5]
-            w = max(56, tw(n, size) + size * 0.75)
-            h = size * 1.42
-            o.append(chip(x, cy, n, size, minw=56))
-            o.append(rect(x - w / 2, cy + h / 2 - 1, w, 5, colour, extra=f' stroke="{outline}" stroke-width="1"'))
-        else:
-            o.append(chip(x, cy, n, size, dim=True, minw=56))
+        o.append(rect(x - 5, HDR_Y - 5, 10, 10, "url(#gold)", rx=1, stroke="#8a6d22", sw=0.8))
+    o.append(text(hx0 - 4, HDR_Y + 4, "9", 11, SILK, "bold", "end"))
+    o.append(text(hx1 + 5, HDR_Y + 30, "SPI", 11, SILK, "bold", "start"))
+    # silk under each pin, reading top to bottom
+    for n in HEADER:
+        o.append(rtext(hdr_x(n) - 3.8, DY0 + 27, n, 10.5, 90, anchor="start"))
     o.append("</g>")
 
+
+def draw_display_tags(o):
+    """Readable chips fanned out below the header's own silk labels."""
+    size, fan = 15, 37
+    c0 = DX0 + 180 - fan * 4
+    leads = []
+    for i, n in enumerate(HEADER):
+        x, c = hdr_x(n), c0 + fan * i
+        cy = DY0 + 98 if i % 2 == 0 else DY0 + 128
+        top = cy - size * 0.71
+        leads.append(f"M{x:g},{DY0 + 66:g} L{c:g},{DY0 + 82:g} V{top:g}")
+    o.append(f'<path d="{" ".join(leads)}" fill="none" stroke="#fff" stroke-width="1.3" opacity="0.9"/>')
+    for i, n in enumerate(HEADER):
+        c = c0 + fan * i
+        cy = DY0 + 98 if i % 2 == 0 else DY0 + 128
+        s, w, h = chip(c, cy, n, size, minw=40, dim=n not in WIRES)
+        o.append(s)
+        if n in WIRES:
+            colour, outline = WIRES[n][4], WIRES[n][5]
+            o.append(rect(c - w / 2, cy + h / 2 - 1, w, 5, colour, extra=f' stroke="{outline}" stroke-width="1"'))
+
+
+# ---------------------------------------------------------------- wires, legend
 
 def draw_wires(o):
     o.append('<g id="wires" fill="none" stroke-linecap="round" stroke-linejoin="round">')
-    # Draw in channel order so crossings layer consistently.
     # Paint order decides which wire passes on top at a crossing: a wire that
     # crosses a parallel group goes on top, so it stays one unbroken line.
     for n in ["BL", "DC", "RST", "VCC", "GND", "CS", "SCL", "SDA"]:
@@ -337,47 +525,44 @@ def draw_wires(o):
         o.append(f'<path d="{d}" stroke="{colour}" stroke-width="5.4"/>')
         o.append("</g>")
     o.append("</g>")
-    # wire ends: a dot on each pin
+    # wire ends: a dot on each pin, the gold ring still showing round it
     for n in WIRES:
         colour, outline = WIRES[n][4], WIRES[n][5]
         for (x, y) in (route(n)[0], route(n)[-1]):
-            o.append(f'<circle cx="{x:g}" cy="{y:g}" r="6.5" fill="{colour}" stroke="{outline}" stroke-width="2"/>')
+            o.append(circle(x, y, 6, colour, outline, 2))
 
 
-def callout(o, x, y, lines, anchor="start"):
+def callout(o, x, y, n, line):
     size = 17
-    w = max(tw(s, size, i == 0) for i, s in enumerate(lines)) + 34
-    h = 12 + 22 * len(lines)
-    x0 = x if anchor == "start" else x - w
-    o.append(rect(x0, y, w, h, "#fff", rx=4, stroke="#d5d9de", sw=1))
-    o.append(rect(x0, y, 5, h, BLUE, rx=1))
-    for i, s in enumerate(lines):
-        o.append(text(x0 + 17, y + 23 + 22 * i, s, size, INK, "bold" if i == 0 else "normal"))
-    return x0, w, h
+    w = tw(line, size) + 56
+    o.append(rect(x, y, w, 38, "#fff", rx=5, stroke="#d5d9de", sw=1))
+    o.append(rect(x, y, 5, 38, BLUE, rx=1))
+    badge(o, x + 24, y + 19, n)
+    o.append(text(x + 44, y + 25, line, size, INK, "bold"))
 
 
 def draw_legend(o):
-    x0, y0 = DX0, 20
+    x0, y0 = 740, 14
     o.append(text(x0, y0 + 14, "CONNECTIONS", 14, BLUE, "bold", "start", ' letter-spacing="1.5"'))
-    o.append(text(x0 + 60, y0 + 40, "Display", 13, MUTED, "bold"))
-    o.append(text(x0 + 142, y0 + 40, "ESP32", 13, MUTED, "bold"))
-    o.append(text(x0 + 284, y0 + 40, "What it does", 13, MUTED, "bold"))
-    rh = 26
+    o.append(text(x0 + 60, y0 + 38, "Display", 13, MUTED, "bold"))
+    o.append(text(x0 + 142, y0 + 38, "ESP32", 13, MUTED, "bold"))
+    o.append(text(x0 + 284, y0 + 38, "What it does", 13, MUTED, "bold"))
+    rh = 25
     for i, n in enumerate(LEGEND_ORDER):
         row, silk, gpio, role, colour, outline = WIRES[n]
-        y = y0 + 62 + rh * i
+        y = y0 + 60 + rh * i
         o.append(f'<line x1="{x0 + 4}" y1="{y}" x2="{x0 + 44}" y2="{y}" stroke="{outline}" stroke-width="8" stroke-linecap="round"/>')
         o.append(f'<line x1="{x0 + 4}" y1="{y}" x2="{x0 + 44}" y2="{y}" stroke="{colour}" stroke-width="5.4" stroke-linecap="round"/>')
-        o.append(text(x0 + 60, y + 7, n, 20, INK, "bold"))
+        o.append(text(x0 + 60, y + 7, n, 19, INK, "bold"))
         o.append(text(x0 + 124, y + 6, "→", 18, MUTED, "normal", "middle"))
-        o.append(text(x0 + 142, y + 7, silk, 20, INK, "bold"))
+        o.append(text(x0 + 142, y + 7, silk, 19, INK, "bold"))
         if gpio is not None:
-            o.append(text(x0 + 192, y + 6, f"GPIO{gpio}", 14, MUTED, "bold"))
-        o.append(text(x0 + 284, y + 6.5, role, 17, INK))
-    y = y0 + 62 + rh * 8
+            o.append(text(x0 + 190, y + 6, f"GPIO{gpio}", 14, MUTED, "bold"))
+        o.append(text(x0 + 284, y + 6.5, role, 16.5, INK))
+    y = y0 + 60 + rh * 8
     o.append(f'<line x1="{x0 + 4}" y1="{y}" x2="{x0 + 44}" y2="{y}" stroke="#b9bec3" stroke-width="3" stroke-dasharray="1 6" stroke-linecap="round"/>')
-    o.append(text(x0 + 60, y + 7, "SDA-O", 20, "#868c92", "bold"))
-    o.append(text(x0 + 142, y + 6.5, "not connected, leave it empty", 17, "#868c92"))
+    o.append(text(x0 + 60, y + 7, "SDA-O", 19, "#868c92", "bold"))
+    o.append(text(x0 + 142, y + 6.5, "not connected, leave it empty", 16.5, "#868c92"))
 
 
 def build():
@@ -386,13 +571,13 @@ def build():
     o = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
          f'role="img" aria-labelledby="wiring-title wiring-desc" font-family="{FONT}">']
     o.append('<title id="wiring-title">Wiring: ESP32 board to 3.5-inch ST7796S display</title>')
-    desc = ("Eight female-to-female jumper wires connect the display's 9-pin SPI header, seen from the back, "
-            "to the ESP32 DevKit, seen from the top with the USB-C port at the bottom. "
+    desc = ("Eight female-to-female jumper wires connect the display's 9-pin SPI header, seen from the back "
+            "with the header at the top, to the ESP32 DevKit, seen from the top with the USB-C port at the bottom. "
             + "; ".join(f"display {n} to ESP32 {WIRES[n][1]}"
                         + (f" (GPIO{WIRES[n][2]})" if WIRES[n][2] is not None else "")
                         for n in LEGEND_ORDER)
             + ". Display pin SDA-O is not connected. The SCL and SDA pins are SPI, not I2C. "
-              "The IM0, IM1 and IM2 jumpers on the display must all be 1 (SPI). "
+              "The IM0, IM1 and IM2 jumpers on the display must all be 1 (the SPI column). "
               "Use a USB-C cable that carries data.")
     o.append(f'<desc id="wiring-desc">{esc(desc)}</desc>')
     o.append(rect(0, 0, W, H, "#ffffff"))
@@ -402,24 +587,23 @@ def build():
     o.append(text(36, 112, "8 female-to-female jumper wires", 19, MUTED))
     draw_esp32(o)
     draw_display(o)
+    draw_display_tags(o)
     draw_wires(o)
-    draw_esp_labels(o)
+    draw_esp_tags(o)
     draw_legend(o)
     # board captions
-    o.append(text(BX1 + 14, BY0 + 26, "ESP32 board", 16, INK, "bold"))
-    o.append(text(BX1 + 14, BY0 + 46, "top view", 15, MUTED))
+    o.append(text(BX1 + 14, BY0 + 24, "ESP32 board", 16, INK, "bold"))
+    o.append(text(BX1 + 14, BY0 + 44, "top side", 15, MUTED))
     o.append(text(DX0, DY1 + 26, "Display", 16, INK, "bold"))
-    o.append(text(DX0, DY1 + 46, "back view, “SPI” header on top", 15, MUTED))
-    # callouts
-    callout(o, DX0 + 18, DY0 + 106, ["SCL/SDA here means SPI, not I2C"])
-    cx0, cw, ch = callout(o, DX1, DY1 + 14, ["Check IM0–IM2 jumpers", "are on 1 (SPI)"], anchor="end")
-    ax = DX1 - 92
-    o.append(f'<path d="M{ax},{DY1 + 14} V{DY1 - 44}" stroke="#fff" stroke-width="6"/>')
-    o.append(f'<path d="M{ax},{DY1 + 14} V{DY1 - 44}" stroke="{BLUE}" stroke-width="2.5"/>')
-    o.append(f'<path d="M{ax - 9},{DY1 - 28} L{ax},{DY1 - 45} L{ax + 9},{DY1 - 28}Z" fill="{BLUE}" '
-             f'stroke="#fff" stroke-width="2" stroke-linejoin="round"/>')
-    ux = (BX0 + BX1) / 2
-    callout(o, ux - 160, UNDER["BL"][0] + 16, ["USB-C: use a cable that carries data"])
+    o.append(text(DX0 + 64, DY1 + 26, "back side", 15, MUTED))
+    # numbered markers on the boards, explained in the cards below
+    badge(o, DX0 + 44, DY0 + 52, 1)
+    badge(o, DX0 + 26, DY0 + 300, 2)
+    badge(o, CX - 72, BY1 + 10, 3)
+    y = UNDER["BL"][0] + 22
+    callout(o, 30, y, 1, "SCL/SDA here means SPI, not I2C")
+    callout(o, 30, y + 48, 2, "Check IM0–IM2 jumpers are on 1 (SPI)")
+    callout(o, 30, y + 96, 3, "USB-C: use a cable that carries data")
     o.append("</svg>")
     return "\n".join(o) + "\n", xs
 
